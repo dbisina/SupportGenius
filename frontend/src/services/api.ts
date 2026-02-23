@@ -15,6 +15,7 @@ export async function submitTicket(data: {
   subject: string;
   description: string;
   order_id?: string;
+  mode?: 'orchestrated' | 'autonomous';
 }) {
   const response = await api.post('/tickets/submit', data);
   return response.data;
@@ -51,6 +52,18 @@ export async function getTrends(days: number = 30) {
   return response.data;
 }
 
+// Pipeline trace endpoint
+export async function getTicketTrace(ticketId: string) {
+  const response = await api.get(`/tickets/${ticketId}/trace`);
+  return response.data;
+}
+
+// Incident detection endpoint
+export async function detectIncidents() {
+  const response = await api.get('/incidents/detect');
+  return response.data;
+}
+
 // Agent endpoints
 export async function getAgentStatus() {
   const response = await api.get('/agents/status');
@@ -59,6 +72,36 @@ export async function getAgentStatus() {
 
 export async function getAgentActivity(limit: number = 20) {
   const response = await api.get('/agents/activity', { params: { limit } });
+  return response.data;
+}
+
+// Knowledge Flywheel
+export async function getKnowledgeStats() {
+  const response = await api.get('/metrics/knowledge');
+  return response.data;
+}
+
+// ES|QL Queries
+export async function getEsqlQueries(limit: number = 20) {
+  const response = await api.get('/metrics/esql-queries', { params: { limit } });
+  return response.data;
+}
+
+// Flywheel data
+export async function getFlywheelData(days: number = 30) {
+  const response = await api.get('/metrics/flywheel', { params: { days } });
+  return response.data;
+}
+
+// Create incident
+export async function createIncident(data: { keyword_cluster: string; affected_tickets: string[]; severity: string }) {
+  const response = await api.post('/incidents/create', data);
+  return response.data;
+}
+
+// Impact metrics
+export async function getImpactMetrics() {
+  const response = await api.get('/metrics/impact');
   return response.data;
 }
 

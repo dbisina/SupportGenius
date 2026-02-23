@@ -1,0 +1,29 @@
+{
+  "mappings": {
+    "properties": {
+      "ticket_id": { "type": "keyword" },
+      "agent": { "type": "keyword" },
+      "step_number": { "type": "integer" },
+      "status": { "type": "keyword" },
+      "started_at": { "type": "date" },
+      "completed_at": { "type": "date" },
+      "duration_ms": { "type": "integer" },
+      "reasoning": { "type": "text" },
+      "tool_calls": {
+        "type": "nested",
+        "properties": {
+          "tool_id": { "type": "keyword" },
+          "params": { "type": "object", "enabled": false },
+          "results": { "type": "object", "enabled": false }
+        }
+      },
+      "llm_calls": { "type": "integer" },
+      "input_tokens": { "type": "integer" },
+      "output_tokens": { "type": "integer" },
+      "model": { "type": "keyword" },
+      "result": { "type": "object", "enabled": false },
+      "confidence": { "type": "float" },
+      "raw_response": { "type": "text", "index": false }
+    }
+  }
+}

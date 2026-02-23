@@ -5,7 +5,9 @@
   "scripts": {
     "setup": "node scripts/setup-indexes.js",
     "seed": "node scripts/seed-data.js",
-    "reset": "npm run setup && npm run seed"
+    "reset": "npm run setup && npm run seed",
+    "benchmark": "node scripts/benchmark.js",
+    "benchmark:fast": "MODE=autonomous node scripts/benchmark.js"
   },
   "keywords": ["elasticsearch", "agent-builder"],
   "author": "SupportGenius Team",

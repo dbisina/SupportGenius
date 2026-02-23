@@ -2,10 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { logger } from './utils/logger';
-import { elasticsearchClient } from './config/elasticsearch';
+import { elasticsearchClient, INDEXES } from './config/elasticsearch';
+import { agentBuilder } from './services/agent-builder';
 import ticketRoutes from './routes/tickets';
 import metricsRoutes from './routes/metrics';
 import agentRoutes from './routes/agents';
+import incidentRoutes from './routes/incidents';
 
 // Load environment variables
 dotenv.config();
@@ -19,7 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Request logging middleware
-app.use((req, res, next) => {
+app.use((req, _res, next) => {
   logger.info(`${req.method} ${req.path}`, {
     query: req.query,
     body: req.body,
@@ -28,7 +30,7 @@ app.use((req, res, next) => {
 });
 
 // Health check endpoint
-app.get('/health', async (req, res) => {
+app.get('/health', async (_req, res) => {
   try {
     const esHealth = await elasticsearchClient.ping();
     res.json({
@@ -50,9 +52,11 @@ app.get('/health', async (req, res) => {
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/agents', agentRoutes);
+app.use('/api/incidents', incidentRoutes);
 
 // Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Unhandled error', err);
   res.status(err.status || 500).json({
     error: {
@@ -72,10 +76,56 @@ async function start() {
     }
     logger.info('Elasticsearch connection established');
 
+    // Ensure pipeline_traces index exists with correct mapping
+    try {
+      const pipelineTracesMapping = {
+        mappings: {
+          dynamic: false as const,
+          properties: {
+            ticket_id: { type: 'keyword' as const },
+            agent: { type: 'keyword' as const },
+            step_number: { type: 'integer' as const },
+            status: { type: 'keyword' as const },
+            started_at: { type: 'date' as const },
+            completed_at: { type: 'date' as const },
+            duration_ms: { type: 'integer' as const },
+            reasoning: { type: 'text' as const },
+            tool_calls: { type: 'object' as const, enabled: false },
+            llm_calls: { type: 'integer' as const },
+            input_tokens: { type: 'integer' as const },
+            output_tokens: { type: 'integer' as const },
+            model: { type: 'keyword' as const },
+            result: { type: 'object' as const, enabled: false },
+            confidence: { type: 'float' as const },
+            raw_response: { type: 'text' as const, index: false },
+          },
+        },
+      };
+      const tracesExists = await elasticsearchClient.indices.exists({ index: INDEXES.PIPELINE_TRACES });
+      if (!tracesExists) {
+        await elasticsearchClient.indices.create({
+          index: INDEXES.PIPELINE_TRACES,
+          body: pipelineTracesMapping,
+        });
+        logger.info('Created pipeline_traces index');
+      }
+    } catch (indexError) {
+      logger.warn('pipeline_traces index setup failed (non-fatal)', { error: indexError });
+    }
+
+    // Register custom tools and agents in Elastic Agent Builder
+    try {
+      await agentBuilder.setup();
+      logger.info('Agent Builder tools and agents registered');
+    } catch (setupError) {
+      logger.warn('Agent Builder setup failed (non-fatal)', { error: setupError });
+    }
+
     app.listen(PORT, () => {
-      logger.info(`🚀 SupportGenius AI server running on port ${PORT}`);
-      logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-      logger.info(`🔍 Elasticsearch: ${process.env.ELASTICSEARCH_URL}`);
+      logger.info(`SupportGenius AI server running on port ${PORT}`);
+      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`Elasticsearch: ${process.env.ELASTICSEARCH_URL}`);
+      logger.info(`Agent Builder: Tools and agents ready`);
     });
   } catch (error) {
     logger.error('Failed to start server', error);

@@ -9,7 +9,7 @@ const agentMonitor = new AgentMonitor();
  * GET /api/agents/status
  * Get current status of all agents
  */
-router.get('/status', async (req, res) => {
+router.get('/status', async (_req, res) => {
   try {
     const status = await agentMonitor.getAgentStatus();
     res.json(status);

@@ -2,7 +2,39 @@
   "permissions": {
     "allow": [
       "Bash(git init:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(npm install)",
+      "Bash(npm run setup:*)",
+      "Bash(npm run seed:*)",
+      "Bash(npm install:*)",
+      "Bash(wc:*)",
+      "Bash(git reset:*)",
+      "Bash(git rm:*)",
+      "WebFetch(domain:www.elastic.co)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout 15 npx ts-node:*)",
+      "Bash(echo:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(npx vite build)",
+      "Bash(npx ts-node src/index.ts)",
+      "Bash(npx vite:*)",
+      "Bash(node scripts/seed-data.js:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(dir:*)",
+      "Bash(git -C \"c:/Users/USER/Documents/GitHub/SupportGenius\" status --short backend/src/services/orchestrator.ts)",
+      "Bash(git -C \"c:/Users/USER/Documents/GitHub/SupportGenius\" show :backend/src/services/orchestrator.ts)",
+      "Bash(git -C \"c:/Users/USER/Documents/GitHub/SupportGenius\" show HEAD:backend/src/services/orchestrator.ts)",
+      "Bash(git -C \"c:/Users/USER/Documents/GitHub/SupportGenius\" diff --cached -- backend/src/services/orchestrator.ts)",
+      "Bash(git -C \"c:/Users/USER/Documents/GitHub/SupportGenius\" diff --cached -- \"backend/src/services/orchestrator.ts\")",
+      "Bash(git -C \"c:/Users/USER/Documents/GitHub/SupportGenius\" diff -- \"backend/src/services/orchestrator.ts\")",
+      "Bash(findstr:*)",
+      "Bash(node:*)"
     ]
   }
 }

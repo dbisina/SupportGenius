@@ -19,6 +19,7 @@ const INDEXES = [
   'product_catalog',
   'knowledge_base',
   'resolution_actions',
+  'pipeline_traces',
 ];
 
 async function setupIndexes() {

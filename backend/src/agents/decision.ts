@@ -2,8 +2,9 @@ import { logger } from '../utils/logger';
 import { TriageResult, ResearchResult, DecisionResult, ActionType } from '../models/types';
 
 /**
- * DecisionAgent - Determines resolution path
- * Uses ES|QL for pattern analysis
+ * DecisionAgent - Legacy standalone agent (unused).
+ * LLM-powered decisions are now handled by Agent Builder.
+ * Retained as a rule-based fallback.
  */
 export class DecisionAgent {
   async process(
@@ -11,50 +12,34 @@ export class DecisionAgent {
     triageResult: TriageResult,
     researchResult: ResearchResult
   ): Promise<DecisionResult> {
-    logger.info('DecisionAgent processing', { ticket_id });
+    // Legacy standalone agent — LLM calls now handled by Agent Builder.
+    // Falls back to rule-based decision.
+    return this.fallbackDecision(ticket_id, triageResult, researchResult);
+  }
 
-    try {
-      // TODO: Implement decision logic
-      // - Use ES|QL to analyze patterns from similar tickets
-      // - Apply policy rules
-      // - Calculate refund eligibility
-      // - Determine if escalation is needed
+  /**
+   * Rule-based fallback if LLM is unavailable
+   */
+  private fallbackDecision(
+    ticket_id: string,
+    triageResult: TriageResult,
+    researchResult: ResearchResult
+  ): DecisionResult {
+    logger.warn('Using fallback rule-based decision', { ticket_id });
 
-      const shouldEscalate = this.checkEscalation(triageResult, researchResult);
-      const actionType = this.determineAction(triageResult);
-
-      const result: DecisionResult = {
+    if (researchResult.customer_profile?.vip_status) {
+      return {
         agent_name: 'DecisionAgent',
-        confidence: 0.88,
-        decision: shouldEscalate
-          ? 'Escalation required'
-          : `Automated resolution: ${actionType}`,
-        resolution_path: 'automated',
-        action_type: actionType,
-        should_escalate: shouldEscalate,
-        escalation_reason: shouldEscalate ? 'Complex case requiring human review' : undefined,
-        calculated_amount: actionType === 'refund' ? 0 : undefined, // TODO: Calculate refund amount
-        next_agent: shouldEscalate ? undefined : 'ExecutionAgent',
+        confidence: 0.7,
+        decision: 'VIP customer escalated to human agent (fallback mode)',
+        resolution_path: 'escalated',
+        action_type: 'escalate',
+        should_escalate: true,
+        escalation_reason: 'VIP customer requires human attention',
         timestamp: new Date(),
       };
-
-      return result;
-    } catch (error) {
-      logger.error('DecisionAgent failed', { ticket_id, error });
-      throw error;
     }
-  }
 
-  private checkEscalation(triageResult: TriageResult, researchResult: ResearchResult): boolean {
-    // TODO: Implement escalation logic
-    // - Check if customer is VIP
-    // - Check if issue is complex
-    // - Check confidence thresholds
-    return false;
-  }
-
-  private determineAction(triageResult: TriageResult): ActionType {
-    // Simple mapping (will be replaced with sophisticated logic)
     const categoryToAction: Record<string, ActionType> = {
       refund: 'refund',
       shipping: 'shipping_label',
@@ -63,6 +48,17 @@ export class DecisionAgent {
       other: 'escalate',
     };
 
-    return categoryToAction[triageResult.category] || 'escalate';
+    const actionType = categoryToAction[triageResult.category] || 'escalate';
+
+    return {
+      agent_name: 'DecisionAgent',
+      confidence: 0.6,
+      decision: `Rule-based: ${actionType} for ${triageResult.category} (fallback mode)`,
+      resolution_path: actionType === 'escalate' ? 'escalated' : 'automated',
+      action_type: actionType,
+      should_escalate: actionType === 'escalate',
+      calculated_amount: actionType === 'refund' ? 50.0 : undefined,
+      timestamp: new Date(),
+    };
   }
 }

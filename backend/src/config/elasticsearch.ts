@@ -43,4 +43,5 @@ export const INDEXES = {
   PRODUCT_CATALOG: 'product_catalog',
   KNOWLEDGE_BASE: 'knowledge_base',
   RESOLUTION_ACTIONS: 'resolution_actions',
+  PIPELINE_TRACES: 'pipeline_traces',
 };

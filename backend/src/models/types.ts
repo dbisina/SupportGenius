@@ -30,6 +30,7 @@ export type TicketStatus =
   | 'processing'
   | 'researching'
   | 'deciding'
+  | 'simulating'
   | 'executing'
   | 'validating'
   | 'resolved'
@@ -170,6 +171,7 @@ export interface SubmitTicketRequest {
   subject: string;
   description: string;
   order_id?: string;
+  mode?: 'orchestrated' | 'autonomous';
 }
 
 export interface SubmitTicketResponse {
@@ -188,4 +190,65 @@ export interface MetricsResponse {
   cost_savings: number;
   by_category: Record<TicketCategory, number>;
   by_status: Record<TicketStatus, number>;
+}
+
+// Adversarial Peer Review types
+export interface DebateTurn {
+  role: 'optimist' | 'pragmatist';
+  argument: string;
+  proposed_action: string;
+  proposed_parameters?: Record<string, any>;
+  confidence: number;
+  key_points: string[];
+}
+
+export interface DebateTranscript {
+  initial_proposal: { action_type: string; reasoning: string; parameters?: Record<string, any> };
+  turns: DebateTurn[];
+  consensus_reached: boolean;
+  winner: 'optimist' | 'pragmatist' | 'consensus';
+  final_action_type: string;
+  final_parameters?: Record<string, any>;
+  final_reasoning: string;
+  judge_rationale?: string;
+  changes_from_original?: string[];
+}
+
+// Pipeline trace types
+export type AgentName = 'triage' | 'research' | 'decision' | 'simulation' | 'execution' | 'quality';
+export type TraceStatus = 'pending' | 'running' | 'completed' | 'failed' | 'skipped';
+
+export interface ToolCallTrace {
+  tool_id: string;
+  params: Record<string, any>;
+  results: any[];
+}
+
+export interface PipelineTrace {
+  ticket_id: string;
+  agent: AgentName;
+  step_number: number;
+  status: TraceStatus;
+  started_at: Date;
+  completed_at?: Date;
+  duration_ms?: number;
+  reasoning: string[];
+  tool_calls: ToolCallTrace[];
+  llm_calls: number;
+  input_tokens: number;
+  output_tokens: number;
+  model: string;
+  result: any;
+  confidence: number;
+  raw_response: string;
+}
+
+export interface PipelineTraceResponse {
+  ticket_id: string;
+  ticket: SupportTicket | null;
+  traces: PipelineTrace[];
+  pipeline_status: 'pending' | 'running' | 'completed' | 'failed';
+  total_duration_ms: number;
+  total_tokens: number;
+  total_llm_calls: number;
 }
