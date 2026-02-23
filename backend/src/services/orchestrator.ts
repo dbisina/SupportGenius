@@ -113,7 +113,7 @@ export class TicketOrchestrator {
         `Respond with JSON: \`\`\`json\n{"category":"refund|shipping|product_issue|account|billing|other","priority":"urgent|high|medium|low","sentiment":"angry|frustrated|neutral|positive","confidence":0.0-1.0,"reasoning":"brief justification"}\n\`\`\``,
       ].join('\n');
 
-      const triagePhase1 = await agentBuilder.converse(AGENT_IDS.TRIAGE, triageInput);
+      const triagePhase1 = await this.converseWithEmit(ticket_id, 'triage', 1, AGENT_IDS.TRIAGE, triageInput);
       const phase1Triage = this.safeParseJson(triagePhase1, 'triage-phase1', {
         category: 'other', priority: 'medium', sentiment: 'neutral', confidence: 0.5, reasoning: 'Initial classification',
       }, ticket_id);
@@ -144,7 +144,7 @@ export class TicketOrchestrator {
           `\`\`\``,
         ].join('\n');
 
-        const triagePhase2 = await agentBuilder.converse(AGENT_IDS.TRIAGE, validateInput, triageConvId);
+        const triagePhase2 = await this.converseWithEmit(ticket_id, 'triage', 1, AGENT_IDS.TRIAGE, validateInput, triageConvId);
         triageResult = this.safeParseJson(triagePhase2, 'triage', {
           ...phase1Triage,
           entities: { customer_id: null, order_id: request.order_id || null, product_id: null },
@@ -311,7 +311,7 @@ export class TicketOrchestrator {
         `Report what you found as JSON: \`\`\`json\n{"similar_tickets":[],"customer":null,"product":null,"knowledge_articles":[],"available_actions":[],"gaps":["list of information you still need"],"initial_findings":"summary of what you found so far"}\n\`\`\``,
       ].join('\n');
 
-      const researchPhase1 = await agentBuilder.converse(AGENT_IDS.RESEARCH, researchInput);
+      const researchPhase1 = await this.converseWithEmit(ticket_id, 'research', 2, AGENT_IDS.RESEARCH, researchInput);
       const phase1Result = this.safeParseJson(researchPhase1, 'research-phase1', {
         similar_tickets: [], customer: null, product: null, knowledge_articles: [],
         available_actions: [], gaps: ['customer history', 'similar resolutions'], initial_findings: 'Initial search completed',
@@ -346,7 +346,7 @@ export class TicketOrchestrator {
             `Report additional findings as JSON: \`\`\`json\n{"additional_similar_tickets":[],"additional_kb_articles":[],"resolution_patterns":[],"additional_context":"what you found in deep dive","remaining_gaps":["anything still unknown"]}\n\`\`\``,
           ].join('\n');
 
-          const researchPhase2 = await agentBuilder.converse(AGENT_IDS.RESEARCH, gapAnalysisInput, researchConvId);
+          const researchPhase2 = await this.converseWithEmit(ticket_id, 'research', 2, AGENT_IDS.RESEARCH, gapAnalysisInput, researchConvId);
           phase2Result = this.safeParseJson(researchPhase2, 'research-phase2', {
             additional_similar_tickets: [], additional_kb_articles: [], resolution_patterns: [],
             additional_context: 'Deep dive completed', remaining_gaps: [],
@@ -392,7 +392,7 @@ export class TicketOrchestrator {
                 `\`\`\``,
               ].join('\n');
 
-              const researchPhase3 = await agentBuilder.converse(AGENT_IDS.RESEARCH, synthesisInput, researchConvId);
+              const researchPhase3 = await this.converseWithEmit(ticket_id, 'research', 2, AGENT_IDS.RESEARCH, synthesisInput, researchConvId);
               researchResult = this.safeParseJson(researchPhase3, 'research', {
                 similar_tickets: [...(phase1Result.similar_tickets || []), ...(phase2Result.additional_similar_tickets || [])],
                 customer: phase1Result.customer, product: phase1Result.product,
@@ -542,7 +542,7 @@ export class TicketOrchestrator {
         `Respond with JSON: \`\`\`json\n{"action_type":"...","should_automate":true/false,"confidence":0.0-1.0,"fault_verified":"company_error|customer_error|shared_fault|unknown","fault_evidence":"what you found","parameters":{},"reasoning":"...","uncertainties":["list any concerns or uncertainties"]}\n\`\`\``,
       ].join('\n');
 
-      const decisionPhase1 = await agentBuilder.converse(AGENT_IDS.DECISION, decisionInput);
+      const decisionPhase1 = await this.converseWithEmit(ticket_id, 'decision', 3, AGENT_IDS.DECISION, decisionInput);
       const phase1Decision = this.safeParseJson(decisionPhase1, 'decision-phase1', {
         action_type: 'escalation', should_automate: false, confidence: 0.5,
         parameters: {}, reasoning: 'Initial assessment', uncertainties: [],
@@ -585,7 +585,7 @@ export class TicketOrchestrator {
           `\`\`\``,
         ].join('\n');
 
-        const decisionPhase2 = await agentBuilder.converse(AGENT_IDS.DECISION, refineInput, decisionConvId);
+        const decisionPhase2 = await this.converseWithEmit(ticket_id, 'decision', 3, AGENT_IDS.DECISION, refineInput, decisionConvId);
         decisionResult = this.safeParseJson(decisionPhase2, 'decision', {
           action_type: phase1Decision.action_type,
           should_automate: phase1Decision.should_automate,
@@ -750,7 +750,7 @@ export class TicketOrchestrator {
         `Respond with JSON: \`\`\`json\n{"scenarios":[{"name":"generous","action_type":"...","description":"...","parameters":{},"satisfaction_estimate":0.9,"projected_ltv_impact":0,"cost_to_company":0,"churn_risk_delta":0},{"name":"moderate",...},{"name":"minimal",...}],"data_sources_consulted":["..."]}\n\`\`\``,
       ].join('\n');
 
-      const simPhase1 = await agentBuilder.converse(AGENT_IDS.SIMULATION, simulationInput);
+      const simPhase1 = await this.converseWithEmit(ticket_id, 'simulation', 4, AGENT_IDS.SIMULATION, simulationInput);
       const simPhase1Result = this.safeParseJson(simPhase1, 'simulation-phase1', {
         scenarios: [
           { name: 'generous', action_type: decisionResult.action_type, description: 'Generous resolution', parameters: {}, satisfaction_estimate: 0.9, projected_ltv_impact: 100, cost_to_company: 50, churn_risk_delta: -0.1 },
@@ -786,7 +786,7 @@ export class TicketOrchestrator {
           `\`\`\``,
         ].join('\n');
 
-        const simPhase2 = await agentBuilder.converse(AGENT_IDS.SIMULATION, simRefineInput, simConvId);
+        const simPhase2 = await this.converseWithEmit(ticket_id, 'simulation', 4, AGENT_IDS.SIMULATION, simRefineInput, simConvId);
         simulationResult = this.safeParseJson(simPhase2, 'simulation', {
           scenarios: simPhase1Result.scenarios,
           recommended_action: decisionResult.action_type,
@@ -947,7 +947,7 @@ export class TicketOrchestrator {
         `Respond with JSON: \`\`\`json\n{"validation_passed":true/false,"validation_issues":[],"planned_steps":["step1","step2","step3"],"adjusted_parameters":{},"pre_check_results":{"customer_found":true/false,"order_found":true/false}}\n\`\`\``,
       ].join('\n');
 
-      const execPhase1 = await agentBuilder.converse(AGENT_IDS.EXECUTION, executionInput);
+      const execPhase1 = await this.converseWithEmit(ticket_id, 'execution', 5, AGENT_IDS.EXECUTION, executionInput);
       const execValidation = this.safeParseJson(execPhase1, 'execution-phase1', {
         validation_passed: true, validation_issues: [], planned_steps: ['validate', 'execute', 'notify'],
         adjusted_parameters: {}, pre_check_results: { customer_found: true, order_found: true },
@@ -979,7 +979,7 @@ export class TicketOrchestrator {
           `\`\`\``,
         ].join('\n');
 
-        const execPhase2 = await agentBuilder.converse(AGENT_IDS.EXECUTION, executeInput, execConvId);
+        const execPhase2 = await this.converseWithEmit(ticket_id, 'execution', 5, AGENT_IDS.EXECUTION, executeInput, execConvId);
         executionResult = this.safeParseJson(execPhase2, 'execution', {
           success: execValidation.validation_passed,
           action_type: finalAction,
@@ -1089,7 +1089,7 @@ export class TicketOrchestrator {
         `Respond with JSON: \`\`\`json\n{"quality_score":0.0,"scores":{"correctness":0.0,"completeness":0.0,"timeliness":0.0,"customer_impact":0.0,"compliance":0.0},"passed":true/false,"feedback":"brief assessment","weakest_dimension":"which scored lowest","concerns":["any quality concerns"]}\n\`\`\``,
       ].join('\n');
 
-      const qualityPhase1 = await agentBuilder.converse(AGENT_IDS.QUALITY, qualityInput);
+      const qualityPhase1 = await this.converseWithEmit(ticket_id, 'quality', 6, AGENT_IDS.QUALITY, qualityInput);
       const phase1Quality = this.safeParseJson(qualityPhase1, 'quality-phase1', {
         quality_score: 0.75,
         scores: { correctness: 0.8, completeness: 0.7, timeliness: 0.8, customer_impact: 0.7, compliance: 0.8 },
@@ -1123,7 +1123,7 @@ export class TicketOrchestrator {
           `\`\`\``,
         ].join('\n');
 
-        const qualityPhase2 = await agentBuilder.converse(AGENT_IDS.QUALITY, improveInput, qualityConvId);
+        const qualityPhase2 = await this.converseWithEmit(ticket_id, 'quality', 6, AGENT_IDS.QUALITY, improveInput, qualityConvId);
         qualityResult = this.safeParseJson(qualityPhase2, 'quality', {
           ...phase1Quality, improvements: [], should_update_knowledge_base: false,
           knowledge_update: '', process_improvements: [],
@@ -1324,19 +1324,11 @@ export class TicketOrchestrator {
         `Search for the customer, find similar tickets, check policies, and determine the best resolution.`,
       ].join('\n');
 
-      const response = await agentBuilder.converse(AGENT_IDS.AUTONOMOUS, input);
+      const response = await this.converseWithEmit(ticket_id, 'autonomous', 0, AGENT_IDS.AUTONOMOUS, input);
 
-      // Stream tool calls as SSE events so the UI shows what the agent did
+      // Collect tool calls and reasoning for trace/logging (converseWithEmit already emitted them live)
       const toolCalls = agentBuilder.getToolCallsFromResponse(response);
-      for (const tc of toolCalls) {
-        this.emitEvent(ticket_id, 'autonomous', 0, 'tool_call', `Tool: ${tc.tool_id}`, { tool_id: tc.tool_id, params: tc.params });
-      }
-
-      // Stream reasoning steps
       const reasoningSteps = (response.steps || []).filter(s => s.type === 'reasoning' && s.reasoning);
-      for (const step of reasoningSteps) {
-        this.emitEvent(ticket_id, 'autonomous', 0, 'thinking', step.reasoning!);
-      }
 
       // Parse the result
       const result = this.safeParseJson(response, 'autonomous', {
@@ -1444,12 +1436,13 @@ export class TicketOrchestrator {
 
     const paramBlock = `Current parameters: ${JSON.stringify(originalParams)}`;
 
-    // Isolated conversations: each role gets its own conversationId so neither
-    // sees the other's role instructions. Arguments are passed as quoted context.
+    // ─── Round 1: Optimist and Pragmatist argue independently (parallel) ───
+    // Each starts its own isolated conversation; neither sees the other's T1 yet.
+    // The Pragmatist's prompt deliberately omits the Optimist's T1 argument so both
+    // can run concurrently. The rebuttals (Round 2) will include the opposing T1.
+    this.emitEvent(ticketId, 'decision', 3, 'debate', 'Round 1: Optimist and Pragmatist presenting opening arguments in parallel...', { phase: 'turn', turn: 1 });
 
-    // Turn 1: Optimist — starts its own conversation
-    this.emitEvent(ticketId, 'decision', 3, 'debate', 'Optimist presenting opening argument...', { phase: 'turn', turn: 1, role: 'optimist' });
-    const opt1Resp = await agentBuilder.converse(AGENT_IDS.DECISION, [
+    const opt1Input = [
       `You are participating in an ADVERSARIAL PEER REVIEW debate about a support ticket resolution.`,
       `This debate has 2 rounds. You will argue, then rebut after seeing the opposing view.`,
       ``,
@@ -1465,22 +1458,9 @@ export class TicketOrchestrator {
       `- For any action: propose additional_gesture (e.g., "15% coupon for next order", "expedited shipping on replacement")`,
       `- Propose refund_percentage if applicable (e.g., 100 for full, 150 for goodwill bonus)`,
       `Respond with ONLY JSON: \`\`\`json\n{"argument":"...","proposed_action":"...","proposed_parameters":{"amount":0,"refund_percentage":100,"additional_gesture":"...","expedited":false},"confidence":0.0-1.0,"key_points":["..."]}\n\`\`\``,
-    ].join('\n'));
-    const optimistConvId = opt1Resp.conversation_id;
-    const opt1 = this.safeParseJson(opt1Resp, 'optimist-1', {
-      argument: 'The customer deserves the most generous resolution to ensure retention.',
-      proposed_action: decisionResult.action_type, proposed_parameters: { ...originalParams, additional_gesture: '15% coupon for next order' },
-      confidence: 0.8, key_points: ['Customer satisfaction is paramount'],
-    }, ticketId);
-    transcript.turns.push({ role: 'optimist', ...opt1 });
-    this.emitEvent(ticketId, 'decision', 3, 'debate', opt1.argument, {
-      phase: 'argument', turn: 1, role: 'optimist', proposed_action: opt1.proposed_action,
-      proposed_parameters: opt1.proposed_parameters, confidence: opt1.confidence, key_points: opt1.key_points,
-    });
+    ].join('\n');
 
-    // Turn 1: Pragmatist — starts its own separate conversation
-    this.emitEvent(ticketId, 'decision', 3, 'debate', 'Pragmatist presenting counter-argument...', { phase: 'turn', turn: 1, role: 'pragmatist' });
-    const prag1Resp = await agentBuilder.converse(AGENT_IDS.DECISION, [
+    const prag1Input = [
       `You are participating in an ADVERSARIAL PEER REVIEW debate about a support ticket resolution.`,
       `This debate has 2 rounds. You will argue, then rebut after seeing the opposing view.`,
       ``,
@@ -1491,36 +1471,57 @@ export class TicketOrchestrator {
       `Customer: ${customerName}, LTV $${ltv}, Returns: ${returns}, VIP: ${isVip}`,
       `Ticket: ${request.subject} — ${request.description}`,
       ``,
-      `An opposing advocate argues: "${opt1.argument}" and proposes: ${opt1.proposed_action} with params: ${JSON.stringify(opt1.proposed_parameters || {})}`,
-      ``,
       `CRITICAL — CHALLENGE FAULT ASSUMPTIONS:`,
       `- Is this ACTUALLY a company error, or did the customer misread the product listing?`,
       `- If the product description matches what was delivered, the customer is at fault — standard return policy ONLY`,
       `- Do NOT approve generous resolutions (full refund + coupon + expedited) for customer errors`,
       `- For customer errors: offer return under standard policy, customer pays return shipping, no bonus gestures`,
       ``,
-      `Counter the opposing view. Propose the most COST-EFFECTIVE parameters:`,
+      `Argue for the most COST-EFFECTIVE parameters independently:`,
       `- For refunds: propose a lower amount or partial refund`,
       `- Instead of a refund, suggest a coupon or store credit if appropriate`,
       `- Remove unnecessary additional gestures that add cost`,
       `- If fault is customer_error or shared_fault, argue for MINIMAL remediation`,
       `Respond with ONLY JSON: \`\`\`json\n{"argument":"...","proposed_action":"...","proposed_parameters":{"amount":0,"refund_percentage":50,"additional_gesture":"none","expedited":false},"confidence":0.0-1.0,"key_points":["..."]}\n\`\`\``,
-    ].join('\n'));
+    ].join('\n');
+
+    // Run both Round 1 calls in parallel — they're independent of each other
+    const [opt1Resp, prag1Resp] = await Promise.all([
+      this.converseWithEmit(ticketId, 'decision', 3, AGENT_IDS.DECISION, opt1Input),
+      this.converseWithEmit(ticketId, 'decision', 3, AGENT_IDS.DECISION, prag1Input),
+    ]);
+
+    const optimistConvId = opt1Resp.conversation_id;
     const pragmatistConvId = prag1Resp.conversation_id;
+
+    const opt1 = this.safeParseJson(opt1Resp, 'optimist-1', {
+      argument: 'The customer deserves the most generous resolution to ensure retention.',
+      proposed_action: decisionResult.action_type, proposed_parameters: { ...originalParams, additional_gesture: '15% coupon for next order' },
+      confidence: 0.8, key_points: ['Customer satisfaction is paramount'],
+    }, ticketId);
     const prag1 = this.safeParseJson(prag1Resp, 'pragmatist-1', {
       argument: 'We must balance customer needs with business sustainability.',
       proposed_action: decisionResult.action_type, proposed_parameters: originalParams,
       confidence: 0.8, key_points: ['Cost control matters'],
     }, ticketId);
+
+    transcript.turns.push({ role: 'optimist', ...opt1 });
     transcript.turns.push({ role: 'pragmatist', ...prag1 });
+
+    this.emitEvent(ticketId, 'decision', 3, 'debate', opt1.argument, {
+      phase: 'argument', turn: 1, role: 'optimist', proposed_action: opt1.proposed_action,
+      proposed_parameters: opt1.proposed_parameters, confidence: opt1.confidence, key_points: opt1.key_points,
+    });
     this.emitEvent(ticketId, 'decision', 3, 'debate', prag1.argument, {
       phase: 'argument', turn: 1, role: 'pragmatist', proposed_action: prag1.proposed_action,
       proposed_parameters: prag1.proposed_parameters, confidence: prag1.confidence, key_points: prag1.key_points,
     });
 
-    // Turn 2: Optimist rebuttal (continues optimist's isolated conversation)
-    this.emitEvent(ticketId, 'decision', 3, 'debate', 'Optimist rebuttal...', { phase: 'turn', turn: 2, role: 'optimist' });
-    const opt2Resp = await agentBuilder.converse(AGENT_IDS.DECISION, [
+    // ─── Round 2: Each advocate rebuts the other's Round 1 (parallel) ───
+    // Optimist T2 needs Prag T1; Pragmatist T2 needs Opt T1. Both independent of each other.
+    this.emitEvent(ticketId, 'decision', 3, 'debate', 'Round 2: Rebuttals in parallel...', { phase: 'turn', turn: 2 });
+
+    const opt2Input = [
       `Round 2 rebuttal. The opposing advocate argued: "${prag1.argument}"`,
       `They proposed: ${prag1.proposed_action} with params: ${JSON.stringify(prag1.proposed_parameters || {})}`,
       `Your previous proposal: ${opt1.proposed_action} with params: ${JSON.stringify(opt1.proposed_parameters || {})}`,
@@ -1528,35 +1529,42 @@ export class TicketOrchestrator {
       ``,
       `Rebut and make your FINAL offer. You may COMPROMISE on some parameters but justify each one.`,
       `Respond with ONLY JSON: \`\`\`json\n{"argument":"...","proposed_action":"...","proposed_parameters":{"amount":0,"refund_percentage":0,"additional_gesture":"...","expedited":false},"confidence":0.0-1.0,"key_points":["..."]}\n\`\`\``,
-    ].join('\n'), optimistConvId);
-    const opt2 = this.safeParseJson(opt2Resp, 'optimist-2', {
-      argument: 'Long-term customer value far exceeds the cost of a generous resolution.',
-      proposed_action: opt1.proposed_action, proposed_parameters: opt1.proposed_parameters,
-      confidence: 0.85, key_points: ['LTV justifies generosity'],
-    }, ticketId);
-    transcript.turns.push({ role: 'optimist', ...opt2 });
-    this.emitEvent(ticketId, 'decision', 3, 'debate', opt2.argument, {
-      phase: 'argument', turn: 2, role: 'optimist', proposed_action: opt2.proposed_action,
-      proposed_parameters: opt2.proposed_parameters, confidence: opt2.confidence, key_points: opt2.key_points,
-    });
+    ].join('\n');
 
-    // Turn 2: Pragmatist rebuttal (continues pragmatist's isolated conversation)
-    this.emitEvent(ticketId, 'decision', 3, 'debate', 'Pragmatist rebuttal...', { phase: 'turn', turn: 2, role: 'pragmatist' });
-    const prag2Resp = await agentBuilder.converse(AGENT_IDS.DECISION, [
-      `Round 2 final rebuttal. The opposing advocate rebutted: "${opt2.argument}"`,
-      `They propose: ${opt2.proposed_action} with params: ${JSON.stringify(opt2.proposed_parameters || {})}`,
+    const prag2Input = [
+      `Round 2 final rebuttal. The opposing advocate argued: "${opt1.argument}"`,
+      `They proposed: ${opt1.proposed_action} with params: ${JSON.stringify(opt1.proposed_parameters || {})}`,
       `Your previous proposal: ${prag1.proposed_action} with params: ${JSON.stringify(prag1.proposed_parameters || {})}`,
       `Customer returns: ${returns}, VIP: ${isVip}`,
       ``,
       `Make your FINAL offer. You may accept some of the opponent's parameters if justified. Be specific.`,
       `Respond with ONLY JSON: \`\`\`json\n{"argument":"...","proposed_action":"...","proposed_parameters":{"amount":0,"refund_percentage":0,"additional_gesture":"...","expedited":false},"confidence":0.0-1.0,"key_points":["..."]}\n\`\`\``,
-    ].join('\n'), pragmatistConvId);
+    ].join('\n');
+
+    // Run both Round 2 calls in parallel — each only depends on the OTHER's Round 1
+    const [opt2Resp, prag2Resp] = await Promise.all([
+      this.converseWithEmit(ticketId, 'decision', 3, AGENT_IDS.DECISION, opt2Input, optimistConvId),
+      this.converseWithEmit(ticketId, 'decision', 3, AGENT_IDS.DECISION, prag2Input, pragmatistConvId),
+    ]);
+
+    const opt2 = this.safeParseJson(opt2Resp, 'optimist-2', {
+      argument: 'Long-term customer value far exceeds the cost of a generous resolution.',
+      proposed_action: opt1.proposed_action, proposed_parameters: opt1.proposed_parameters,
+      confidence: 0.85, key_points: ['LTV justifies generosity'],
+    }, ticketId);
     const prag2 = this.safeParseJson(prag2Resp, 'pragmatist-2', {
       argument: 'A moderate resolution balances both sides effectively.',
       proposed_action: prag1.proposed_action, proposed_parameters: prag1.proposed_parameters,
       confidence: 0.8, key_points: ['Balance is key'],
     }, ticketId);
+
+    transcript.turns.push({ role: 'optimist', ...opt2 });
     transcript.turns.push({ role: 'pragmatist', ...prag2 });
+
+    this.emitEvent(ticketId, 'decision', 3, 'debate', opt2.argument, {
+      phase: 'argument', turn: 2, role: 'optimist', proposed_action: opt2.proposed_action,
+      proposed_parameters: opt2.proposed_parameters, confidence: opt2.confidence, key_points: opt2.key_points,
+    });
     this.emitEvent(ticketId, 'decision', 3, 'debate', prag2.argument, {
       phase: 'argument', turn: 2, role: 'pragmatist', proposed_action: prag2.proposed_action,
       proposed_parameters: prag2.proposed_parameters, confidence: prag2.confidence, key_points: prag2.key_points,
@@ -1665,6 +1673,109 @@ export class TicketOrchestrator {
       // Mark fallback so traces show it was a fallback, not real agent output
       return { ...fallback, _fallback: true, _parse_failed: true };
     }
+  }
+
+  // ─── Streaming helpers ───
+
+  /**
+   * Drop-in replacement for `agentBuilder.converse()` that also streams every
+   * intermediate step (reasoning, tool_call, tool_result) to the SSE channel
+   * as the agent runs. Uses the streaming API when available; falls back to
+   * replaying the completed response's `steps` array in a burst.
+   */
+  private async converseWithEmit(
+    ticketId: string,
+    agent: string,
+    step: number,
+    agentId: string,
+    input: string,
+    conversationId?: string,
+  ): Promise<ConverseResponse> {
+    const callStart = Date.now();
+    let firstStepArrived = false;
+
+    // Emit a progress tick every 3 seconds so the terminal stays alive while
+    // Agent Builder is processing (which can take 30-120 s with no events).
+    // The ticker stops the moment the first real step arrives.
+    const ticker = setInterval(() => {
+      if (!firstStepArrived) {
+        const secs = Math.floor((Date.now() - callStart) / 1000);
+        this.emitEvent(ticketId, agent, step, 'thinking', `⟳ Agent Builder processing… ${secs}s`);
+      }
+    }, 3000);
+
+    try {
+      return await agentBuilder.converseWithStepCallback(
+        agentId,
+        input,
+        conversationId,
+        (s) => {
+          // Cancel ticker as soon as real content arrives
+          if (!firstStepArrived) {
+            firstStepArrived = true;
+            clearInterval(ticker);
+          }
+          this.emitStep(ticketId, agent, step, s);
+        },
+      );
+    } finally {
+      clearInterval(ticker);
+    }
+  }
+
+  /** Translate a single Agent Builder step into a PipelineEvent on the SSE bus */
+  private emitStep(ticketId: string, agent: string, step: number, s: any): void {
+    const type: string = s.type ?? '';
+    if ((type === 'reasoning' || type === 'thinking') && s.reasoning) {
+      const msg = s.reasoning.length > 400 ? `${s.reasoning.substring(0, 397)}...` : s.reasoning;
+      this.emitEvent(ticketId, agent, step, 'thinking', msg);
+    } else if (type === 'tool_call' && s.tool_id) {
+      const name = s.tool_id
+        .replace(/^supportgenius\./, '')
+        .replace(/^platform\.core\./, '')
+        .replace(/_/g, ' ');
+      const paramStr = this.fmtParams(s.params);
+      this.emitEvent(
+        ticketId, agent, step, 'tool_call',
+        `→ ${name}${paramStr ? ` — ${paramStr}` : ''}`,
+        { tool_name: s.tool_id, params: s.params },
+      );
+    } else if (type === 'tool_result' && s.results) {
+      const summary = this.fmtResults(s.results);
+      this.emitEvent(
+        ticketId, agent, step, 'tool_result',
+        summary,
+        { tool_call_id: s.tool_call_id, count: Array.isArray(s.results) ? s.results.length : 1 },
+      );
+    }
+  }
+
+  /** Compact parameter summary for display (max 2 entries, 40 chars each) */
+  private fmtParams(params?: Record<string, any>): string {
+    if (!params) return '';
+    const entries = Object.entries(params);
+    if (!entries.length) return '';
+    return entries.slice(0, 2)
+      .map(([k, v]) => `${k}: ${String(v).substring(0, 40)}`)
+      .join(', ')
+      + (entries.length > 2 ? ', ...' : '');
+  }
+
+  /** Human-readable summary of a tool_result `results` array */
+  private fmtResults(results: any[]): string {
+    if (!results?.length) return 'No results';
+    const first = results[0];
+    // Agent Builder wraps ES hits as { type:'documents', data:[...] }
+    if (first?.type === 'documents' && Array.isArray(first.data)) {
+      const n = first.data.length;
+      return `${n} document${n !== 1 ? 's' : ''} retrieved`;
+    }
+    // ES|QL results
+    if (first?.type === 'esql' && Array.isArray(first.values)) {
+      const n = first.values.length;
+      return `${n} row${n !== 1 ? 's' : ''} returned`;
+    }
+    return `${results.length} result${results.length !== 1 ? 's' : ''}`;
   }
 
   private async logToolCalls(ticketId: string, agentName: string, response: ConverseResponse): Promise<void> {

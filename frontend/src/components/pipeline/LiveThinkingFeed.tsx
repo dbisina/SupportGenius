@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Brain, Search, Scale, Sparkles, Zap, Shield,
   MessageSquare, Database, Lightbulb, CheckCircle2, ArrowRight,
-  Swords, Gauge, Code2, AlertTriangle, Terminal, ChevronRight
+  Swords, Gauge, Code2, Terminal, ChevronRight
 } from 'lucide-react';
 
 interface PipelineEvent {
@@ -49,6 +49,39 @@ const TYPE_COLORS: Record<string, string> = {
   confidence:      'text-sky-400',
   tool_synthesis:  'text-fuchsia-400',
 };
+
+/** Collapsible tool-result block — shows count summary by default, full JSON on expand */
+function ToolResultBlock({ detail }: { detail: any }) {
+  const [expanded, setExpanded] = useState(false);
+  const toggle = useCallback(() => setExpanded(p => !p), []);
+
+  // Build a human-readable summary line
+  const count = detail?.count;
+  const summary = count !== undefined
+    ? `${count} record${count !== 1 ? 's' : ''}`
+    : null;
+  const raw = JSON.stringify(detail, null, 2);
+  const isLarge = raw.length > 300;
+
+  return (
+    <div className="ml-16 mt-1 mb-2 max-w-xl">
+      {isLarge ? (
+        <button
+          onClick={toggle}
+          className="flex items-center space-x-2 px-2 py-1 rounded bg-black/30 border border-white/5 text-[10px] text-slate-500 font-mono hover:border-white/10 transition-colors w-full text-left"
+        >
+          <span className="text-slate-600">{expanded ? '▾' : '▸'}</span>
+          <span>{summary ?? `${raw.length} chars`} — click to {expanded ? 'collapse' : 'expand'}</span>
+        </button>
+      ) : null}
+      {(!isLarge || expanded) && (
+        <div className="p-2 rounded bg-black/30 border border-white/5 text-[10px] text-slate-500 font-mono overflow-x-auto mt-0.5">
+          <pre className="whitespace-pre-wrap break-words">{raw}</pre>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function LiveThinkingFeed({ ticketId }: { ticketId: string }) {
   const [events, setEvents] = useState<PipelineEvent[]>([]);
@@ -163,7 +196,6 @@ export default function LiveThinkingFeed({ ticketId }: { ticketId: string }) {
                 {group.events.map((ev, ei) => {
                   const EvIcon = EVENT_ICONS[ev.type] || MessageSquare;
                   const color = TYPE_COLORS[ev.type] || 'text-slate-400';
-                  const isLastEvent = ei === group.events.length - 1;
 
                   return (
                     <div
@@ -198,20 +230,33 @@ export default function LiveThinkingFeed({ ticketId }: { ticketId: string }) {
                         </div>
                       )}
 
-                      {/* Tool Output Block */}
-                      {ev.type === 'tool_result' && ev.detail && (
-                         <div className="ml-16 mt-1 mb-2 p-2 rounded bg-black/30 border border-white/5 text-[10px] text-slate-500 font-mono overflow-x-auto max-w-xl">
-                            <pre>{JSON.stringify(ev.detail, null, 2)}</pre>
-                         </div>
+                      {/* Tool Call Block */}
+                      {ev.type === 'tool_call' && ev.detail?.tool_name && (
+                        <div className="ml-16 mt-1 mb-2">
+                          <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded bg-indigo-500/10 border border-indigo-500/20 text-[10px] text-indigo-300 font-mono">
+                            <span className="text-indigo-500 select-none">$</span>
+                            <span className="font-semibold">
+                              {ev.detail.tool_name
+                                .replace(/^supportgenius\./, '')
+                                .replace(/^platform\.core\./, '')
+                                .replace(/_/g, ' ')}
+                            </span>
+                            {ev.detail.params && Object.keys(ev.detail.params).length > 0 && (
+                              <span className="text-slate-500">
+                                ({Object.entries(ev.detail.params as Record<string,unknown>)
+                                  .slice(0, 2)
+                                  .map(([k, v]) => `${k}: ${String(v).substring(0, 30)}`)
+                                  .join(', ')}
+                                {Object.keys(ev.detail.params).length > 2 ? ', ...' : ''})
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       )}
 
-                      {/* Tool Call Block */}
-                      {ev.type === 'tool_call' && ev.detail && (
-                         <div className="ml-16 mt-1 mb-2">
-                            <div className="inline-block px-2 py-1 rounded bg-indigo-500/10 border border-indigo-500/20 text-[10px] text-indigo-300 font-mono">
-                               $ {ev.detail.tool_name}({JSON.stringify(ev.detail.params)})
-                            </div>
-                         </div>
+                      {/* Tool Result Block */}
+                      {ev.type === 'tool_result' && ev.detail && (
+                        <ToolResultBlock detail={ev.detail} />
                       )}
                     </div>
                   );

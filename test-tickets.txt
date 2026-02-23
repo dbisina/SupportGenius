@@ -1,0 +1,156 @@
+SUPPORTGENIUS — TEST TICKETS
+=============================
+
+
+── TICKET 1 ─────────────────────────────────────────────
+Scenario : Wrong item received (company error)
+Email    : sarah.johnson@gmail.com
+Order ID : ORD-882341
+Subject  : Received completely wrong item - ordered headphones got a phone case
+Desc     : Hi, I placed an order last week for the Sony WH-1000XM5 wireless
+           headphones and when the package arrived today it contained a generic
+           phone case worth maybe $5. This is clearly a warehouse packing error.
+           I need either the correct headphones shipped immediately or a full
+           refund. Very disappointed as this was a birthday gift and the occasion
+           has now passed.
+Expects  : category=refund, fault=company_error, action=refund or replacement
+
+
+── TICKET 2 ─────────────────────────────────────────────
+Scenario : Lost package — marked delivered but never arrived
+Email    : marcus.williams@outlook.com
+Order ID : ORD-774920
+Subject  : Package marked delivered but never arrived - 3 days ago
+Desc     : Tracking shows my order was delivered to my front door on Tuesday
+           but there is absolutely nothing here. I checked with all my neighbors
+           and the building manager. This is a $340 order. UPS just keeps telling
+           me to contact the retailer. I need this resolved ASAP, I have been
+           waiting 2 weeks for this item.
+Expects  : category=shipping, fault=company_error, action=replacement or refund
+
+
+── TICKET 3 ─────────────────────────────────────────────
+Scenario : VIP customer — dangerous swollen laptop battery (urgent)
+Email    : priya.patel.vip@techcorp.com
+Order ID : ORD-991002
+Subject  : Laptop battery expanding and device getting extremely hot
+Desc     : URGENT - My Dell XPS 15 laptop purchased 8 months ago has a severely
+           swollen battery. The trackpad is being pushed up and the bottom case
+           is warping. The laptop is also getting dangerously hot even when idle.
+           I read that this is a fire hazard. I am a Premium member and spend
+           over $8000 a year with you. I need an immediate replacement or
+           emergency pickup — I am not comfortable having this device in my home.
+Expects  : category=product_issue, priority=urgent, fault=company_error, VIP boost
+
+
+── TICKET 4 ─────────────────────────────────────────────
+Scenario : Double charge — billing error
+Email    : tom.henderson@yahoo.com
+Order ID : ORD-550871
+Subject  : Charged twice for the same order
+Desc     : I was charged $127.99 twice for my order. My bank statement clearly
+           shows two identical transactions on March 12th both to your company
+           for the exact same amount. Only one order exists in my account.
+           I need one charge refunded immediately. I have already waited 5 days
+           after contacting chat support and nothing has happened.
+Expects  : category=billing, fault=company_error, action=refund
+
+
+── TICKET 5 ─────────────────────────────────────────────
+Scenario : Account lockout — no order ID
+Email    : emily.chen@stanford.edu
+Order ID : (none)
+Subject  : Cannot log into my account - locked out for a week
+Desc     : I have been locked out of my account for 7 days. Password reset
+           emails are not arriving even in spam. I tried 3 different browsers
+           and the mobile app. I have an active subscription with autopay that
+           I cannot cancel because I cannot log in. I am being charged monthly
+           for a service I cannot access.
+Expects  : category=account, action=account_update, no order entity extraction
+
+
+── TICKET 6 ─────────────────────────────────────────────
+Scenario : Defective product — stopped working within warranty
+Email    : derek.okonkwo@protonmail.com
+Order ID : ORD-663345
+Subject  : Product stopped working after 3 weeks - defective unit
+Desc     : The Dyson V12 vacuum I ordered completely stopped working after
+           3 weeks of normal use. It was working fine then suddenly the motor
+           stopped engaging. No error lights, nothing. I followed all the
+           troubleshooting steps in the manual. This unit is clearly defective
+           and still under warranty. I want a replacement sent before I return
+           the broken unit as I cannot be without a vacuum.
+Expects  : category=product_issue, fault=company_error, action=replacement
+
+
+── TICKET 7 ─────────────────────────────────────────────
+Scenario : Repeat issue — 3rd wrong order this month, angry customer
+Email    : lisa.martinez.angry@hotmail.com
+Order ID : ORD-221788
+Subject  : Third time my order has been wrong THIS MONTH
+Desc     : I am absolutely furious. This is the THIRD time this month you have
+           sent me the wrong items. This order was supposed to be a large red
+           t-shirt and I got a medium blue one. I want a full refund for all
+           three orders and compensation for my wasted time. If this is not
+           resolved I am disputing all charges with my bank.
+Expects  : category=refund, sentiment=angry, repeat-issue escalation triggered
+
+
+── TICKET 8 ─────────────────────────────────────────────
+Scenario : Express shipping failure — partial refund (shipping cost only)
+Email    : james.kim@business.com
+Order ID : ORD-445102
+Subject  : Where is my express shipping refund
+Desc     : I paid $24.99 for express 2-day shipping. The item arrived 6 days
+           later. I want a refund of the shipping cost since the service I paid
+           for was not delivered.
+Expects  : category=shipping, action=refund (shipping only, not full order)
+
+
+── TICKET 9 ─────────────────────────────────────────────
+Scenario : Invalid return label — return window closing
+Email    : natalie.brooks@gmail.com
+Order ID : ORD-338891
+Subject  : Return label not working - package stuck at home
+Desc     : I need to return my order (wrong size). You emailed me a return
+           label 4 days ago but UPS scans it and says the label is invalid or
+           already used. I tried reprinting multiple times. I have a 30-day
+           return window and 10 days have already passed. I need a working
+           return label urgently.
+Expects  : category=shipping, action=shipping_label (new return label)
+
+
+── TICKET 10 ────────────────────────────────────────────
+Scenario : Subscription auto-renewed without advance notice
+Email    : alex.torres@enterprise.io
+Order ID : ORD-112233
+Subject  : Subscription auto-renewed without notice - want refund
+Desc     : My annual subscription auto-renewed yesterday for $299. I never
+           received the reminder email you are supposed to send 30 days in
+           advance. I do not want to continue. I want a full refund of the
+           $299 charge. I have not used the service since the renewal. Please
+           cancel the subscription and process the refund immediately.
+Expects  : category=billing, fault=company_error, action=refund + cancel
+
+
+── TICKET 11 ────────────────────────────────────────────
+Scenario : Customer error — decorative model mistaken for real bicycle
+Email    : chen.wei.orders@gmail.com
+Order ID : ORD-775544
+Subject  : Item description misleading - model bicycle not real bicycle
+Desc     : I ordered what I thought was a bicycle from your site (listed as
+           Retro City Bicycle, $34.99). When it arrived it is a tiny decorative
+           model about 8 inches long. I want a full refund and return label
+           because the listing was misleading.
+Expects  : category=refund, fault=customer_error, action=standard return only
+           (NO bonus coupon — price/title clearly indicated a model/decoration)
+
+
+── TICKET 12 ────────────────────────────────────────────
+Scenario : Same as Ticket 1 but in AUTONOMOUS mode (single agent)
+Email    : sarah.johnson@gmail.com
+Order ID : ORD-882341
+Subject  : Received completely wrong item - ordered headphones got a phone case
+Desc     : Same description as Ticket 1.
+Mode     : autonomous
+Expects  : Same outcome as Ticket 1, resolved in a single agent call

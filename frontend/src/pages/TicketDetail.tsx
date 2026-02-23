@@ -4,7 +4,6 @@ import { ArrowLeft, Clock, Cpu, Coins, User, Shield, Star, Gauge, Activity, Aler
 import { getTicketTrace } from '../services/api';
 import PipelineView from '../components/PipelineView';
 import SentimentBanner from '../components/pipeline/SentimentBanner';
-import CustomerResponsePreview from '../components/pipeline/CustomerResponsePreview';
 import KnowledgeFlywheel from '../components/pipeline/KnowledgeFlywheel';
 import ConfidenceHeatmap from '../components/pipeline/ConfidenceHeatmap';
 
@@ -31,10 +30,6 @@ export default function TicketDetail() {
   const triageResult = triageTrace?.result;
   const researchTrace = traceData?.traces?.find((t: any) => t.agent === 'research');
   const customer = researchTrace?.result?.customer;
-  const executionTrace = traceData?.traces?.find((t: any) => t.agent === 'execution');
-  const executionResult = executionTrace?.result;
-  const decisionTrace = traceData?.traces?.find((t: any) => t.agent === 'decision');
-  const decisionResult = decisionTrace?.result;
   const qualityTrace = traceData?.traces?.find((t: any) => t.agent === 'quality');
   const qualityResult = qualityTrace?.result;
 
@@ -170,7 +165,7 @@ export default function TicketDetail() {
                      <p className="text-slate-300 leading-relaxed">{ticket.resolution}</p>
                   </div>
                   {ticket.resolution_time_minutes && (
-                    <div className="mt-6 flex items-center text-sm text-slate-500 bg-emerald-500/5 px-4 py-2 rounded-lg border border-emerald-500/10 inline-flex">
+                    <div className="mt-6 inline-flex items-center text-sm text-slate-500 bg-emerald-500/5 px-4 py-2 rounded-lg border border-emerald-500/10">
                        <Clock className="w-4 h-4 mr-2 text-emerald-500" />
                        Resolved in <span className="text-emerald-400 font-mono mx-1">{ticket.resolution_time_minutes}</span> minutes
                     </div>

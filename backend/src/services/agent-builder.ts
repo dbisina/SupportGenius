@@ -120,6 +120,145 @@ export class AgentBuilderClient {
   }
 
   /**
+   * Send a message to an Agent Builder agent and invoke `onStep` for every
+   * intermediate step as it becomes available.
+   *
+   * Primary path: tries the Agent Builder streaming endpoint (`stream: true`)
+   * which returns server-sent events so each reasoning / tool-call / tool-result
+   * chunk fires the callback immediately.
+   *
+   * Fallback: if the server does not support SSE (returns plain JSON), we replay
+   * the steps array from the completed response so the caller still receives
+   * every step — just in a burst after the call finishes rather than in real-time.
+   */
+  async converseWithStepCallback(
+    agentId: string,
+    input: string,
+    conversationId?: string,
+    onStep: (step: any) => void = () => {},
+  ): Promise<ConverseResponse> {
+    try {
+      return await this.converseStream(agentId, input, conversationId, onStep);
+    } catch (err) {
+      logger.debug('Streaming not supported, falling back to batch + step replay', { agentId, err });
+      const result = await this.converse(agentId, input, conversationId);
+      for (const s of result.steps ?? []) {
+        try { onStep(s); } catch { /* non-fatal */ }
+      }
+      return result;
+    }
+  }
+
+  /**
+   * Streaming variant of `converse`. Requests SSE from Agent Builder via
+   * `stream: true` in the body and `Accept: text/event-stream` header.
+   *
+   * Each SSE line is parsed and passed to `onStep`. If the response is plain
+   * JSON (streaming unsupported), steps are replayed from the response.
+   */
+  private async converseStream(
+    agentId: string,
+    input: string,
+    conversationId: string | undefined,
+    onStep: (step: any) => void,
+  ): Promise<ConverseResponse> {
+    const body: Record<string, any> = { input, agent_id: agentId, stream: true };
+    if (conversationId) body.conversation_id = conversationId;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 180_000);
+
+    const response = await fetch(`${this.kibanaUrl}/api/agent_builder/converse`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `ApiKey ${this.apiKey}`,
+        'kbn-xsrf': 'true',
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeout));
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(`Agent Builder streaming failed (${response.status}): ${text}`);
+    }
+
+    const contentType = response.headers.get('content-type') ?? '';
+
+    // Server returned plain JSON — not streaming. Parse and replay.
+    if (!contentType.includes('event-stream')) {
+      const result = await response.json() as ConverseResponse;
+      for (const s of result.steps ?? []) {
+        try { onStep(s); } catch { /* non-fatal */ }
+      }
+      return result;
+    }
+
+    // Server returned SSE — read the stream.
+    if (!response.body) throw new Error('No response body for streaming request');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    const allSteps: any[] = [];
+    let final: Partial<ConverseResponse> | null = null;
+
+    try {
+      outer: while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (!raw || raw === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(raw);
+            // Normalise nested formats: { type:'event', event:{...} } or flat
+            const evt: any = parsed.event ?? parsed;
+            if (
+              evt.type === 'end' || evt.status === 'done' ||
+              parsed.status === 'done' || parsed.type === 'complete'
+            ) {
+              final = evt;
+              break outer;
+            }
+            allSteps.push(evt);
+            try { onStep(evt); } catch { /* non-fatal */ }
+          } catch { /* ignore malformed SSE line */ }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    if (!final) throw new Error('SSE stream ended without a final response event');
+
+    logger.info('Agent Builder streaming converse completed', {
+      agentId,
+      steps: allSteps.length,
+      toolCalls: allSteps.filter(s => s.type === 'tool_call').length,
+    });
+
+    return {
+      conversation_id: final.conversation_id ?? '',
+      round_id: final.round_id ?? '',
+      status: final.status ?? 'done',
+      steps: allSteps,
+      started_at: final.started_at ?? '',
+      time_to_first_token: final.time_to_first_token ?? 0,
+      time_to_last_token: final.time_to_last_token ?? 0,
+      model_usage: final.model_usage,
+      response: final.response ?? { message: '' },
+    };
+  }
+
+  /**
    * Extract structured JSON from an agent's text response.
    * Agents are instructed to return JSON in code fences.
    */

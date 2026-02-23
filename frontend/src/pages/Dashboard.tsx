@@ -132,7 +132,7 @@ export default function Dashboard() {
         {/* Main Chart - Large Block */}
         <div className="col-span-1 md:col-span-2 lg:col-span-3 glass-panel rounded-2xl p-6 relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors">
+            <button aria-label="Open in full view" className="p-2 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors">
               <ExternalLink className="w-4 h-4" />
             </button>
           </div>

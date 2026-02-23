@@ -1,3 +1,5 @@
+import dns from 'dns';
+dns.setDefaultResultOrder('ipv4first'); // avoid slow IPv6 fallback on Windows
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -69,12 +71,19 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 // Start server
 async function start() {
   try {
-    // Test Elasticsearch connection
-    const esConnected = await elasticsearchClient.ping();
-    if (!esConnected) {
-      throw new Error('Failed to connect to Elasticsearch');
+    // Test Elasticsearch connection — non-fatal so the server still starts
+    // in degraded mode (routes work, ES-backed features return errors gracefully).
+    let esReady = false;
+    try {
+      esReady = await elasticsearchClient.ping();
+      if (esReady) {
+        logger.info('Elasticsearch connection established');
+      } else {
+        logger.warn('Elasticsearch ping returned false — running in degraded mode. Check ELASTICSEARCH_URL in .env');
+      }
+    } catch (pingErr: any) {
+      logger.warn(`Elasticsearch unreachable (${pingErr?.message ?? pingErr}) — running in degraded mode. Check ELASTICSEARCH_URL in .env`);
     }
-    logger.info('Elasticsearch connection established');
 
     // Ensure pipeline_traces index exists with correct mapping
     try {
@@ -129,7 +138,8 @@ async function start() {
     });
   } catch (error) {
     logger.error('Failed to start server', error);
-    process.exit(1);
+    // Don't exit — let the process crash naturally so the caller (e.g. nodemon) can report it.
+    throw error;
   }
 }
 

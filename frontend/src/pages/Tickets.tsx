@@ -90,6 +90,7 @@ export default function Tickets() {
         </div>
         <div className="flex items-center space-x-3">
           <button
+            aria-label="Refresh tickets"
             onClick={loadTickets}
             disabled={loading}
             className="flex items-center space-x-2 bg-white/5 hover:bg-white/10 text-slate-300 px-4 py-2 rounded-xl transition-colors disabled:opacity-50 border border-white/5"
@@ -117,10 +118,10 @@ export default function Tickets() {
             />
         </div>
         <div className="flex items-center space-x-2">
-           <button className="p-2 hover:bg-white/5 rounded-lg text-slate-400 transition-colors">
+           <button aria-label="Filter tickets" className="p-2 hover:bg-white/5 rounded-lg text-slate-400 transition-colors">
              <Filter className="w-5 h-5" />
            </button>
-           <button className="p-2 hover:bg-white/5 rounded-lg text-slate-400 transition-colors">
+           <button aria-label="More options" className="p-2 hover:bg-white/5 rounded-lg text-slate-400 transition-colors">
              <MoreHorizontal className="w-5 h-5" />
            </button>
         </div>

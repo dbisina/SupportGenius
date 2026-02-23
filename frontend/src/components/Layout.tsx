@@ -44,7 +44,7 @@ export default function Layout({ children }: LayoutProps) {
               <span className="font-semibold tracking-wide text-xs">NETWORK STABLE</span>
             </div>
             
-            <button className="relative p-2.5 rounded-full hover:bg-white/10 transition-colors group/bell">
+            <button aria-label="Notifications" className="relative p-2.5 rounded-full hover:bg-white/10 transition-colors group/bell">
               <Bell className="w-5 h-5 text-slate-400 group-hover/bell:text-white transition-colors" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-slate-900 animate-pulse"></span>
             </button>
