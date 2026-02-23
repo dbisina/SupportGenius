@@ -1,0 +1,86 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1
+  },
+  "mappings": {
+    "properties": {
+      "customer_id": {
+        "type": "keyword"
+      },
+      "email": {
+        "type": "keyword"
+      },
+      "name": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "lifetime_value": {
+        "type": "float"
+      },
+      "total_orders": {
+        "type": "integer"
+      },
+      "total_returns": {
+        "type": "integer"
+      },
+      "avg_order_value": {
+        "type": "float"
+      },
+      "last_order_date": {
+        "type": "date"
+      },
+      "support_tickets_count": {
+        "type": "integer"
+      },
+      "vip_status": {
+        "type": "boolean"
+      },
+      "order_history": {
+        "type": "nested",
+        "properties": {
+          "order_id": {
+            "type": "keyword"
+          },
+          "date": {
+            "type": "date"
+          },
+          "total": {
+            "type": "float"
+          },
+          "status": {
+            "type": "keyword"
+          },
+          "items": {
+            "type": "nested",
+            "properties": {
+              "product_id": {
+                "type": "keyword"
+              },
+              "name": {
+                "type": "text"
+              },
+              "quantity": {
+                "type": "integer"
+              },
+              "price": {
+                "type": "float"
+              }
+            }
+          }
+        }
+      },
+      "created_at": {
+        "type": "date"
+      },
+      "updated_at": {
+        "type": "date"
+      }
+    }
+  }
+}

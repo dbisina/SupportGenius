@@ -1,0 +1,80 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1,
+    "analysis": {
+      "analyzer": {
+        "ticket_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "stop", "snowball"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "ticket_id": {
+        "type": "keyword"
+      },
+      "customer_id": {
+        "type": "keyword"
+      },
+      "order_id": {
+        "type": "keyword"
+      },
+      "subject": {
+        "type": "text",
+        "analyzer": "ticket_analyzer",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "description": {
+        "type": "text",
+        "analyzer": "ticket_analyzer"
+      },
+      "ticket_embedding": {
+        "type": "dense_vector",
+        "dims": 1536,
+        "index": true,
+        "similarity": "cosine"
+      },
+      "category": {
+        "type": "keyword"
+      },
+      "priority": {
+        "type": "keyword"
+      },
+      "status": {
+        "type": "keyword"
+      },
+      "resolution": {
+        "type": "text",
+        "analyzer": "ticket_analyzer"
+      },
+      "resolution_time_minutes": {
+        "type": "integer"
+      },
+      "automated": {
+        "type": "boolean"
+      },
+      "agent_confidence": {
+        "type": "float"
+      },
+      "created_at": {
+        "type": "date"
+      },
+      "resolved_at": {
+        "type": "date"
+      },
+      "metadata": {
+        "type": "object",
+        "enabled": false
+      }
+    }
+  }
+}

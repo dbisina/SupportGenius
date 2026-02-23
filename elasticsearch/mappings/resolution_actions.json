@@ -1,0 +1,63 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1
+  },
+  "mappings": {
+    "properties": {
+      "action_id": {
+        "type": "keyword"
+      },
+      "action_type": {
+        "type": "keyword"
+      },
+      "action_name": {
+        "type": "text",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "description": {
+        "type": "text"
+      },
+      "workflow_template": {
+        "type": "object",
+        "enabled": false
+      },
+      "success_rate": {
+        "type": "float"
+      },
+      "avg_execution_time": {
+        "type": "integer"
+      },
+      "total_executions": {
+        "type": "integer"
+      },
+      "conditions": {
+        "type": "text"
+      },
+      "parameters": {
+        "type": "object",
+        "enabled": false
+      },
+      "requires_approval": {
+        "type": "boolean"
+      },
+      "category": {
+        "type": "keyword"
+      },
+      "enabled": {
+        "type": "boolean"
+      },
+      "created_at": {
+        "type": "date"
+      },
+      "updated_at": {
+        "type": "date"
+      }
+    }
+  }
+}

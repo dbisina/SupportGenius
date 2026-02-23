@@ -1,0 +1,70 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1,
+    "analysis": {
+      "analyzer": {
+        "product_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "stop"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "product_id": {
+        "type": "keyword"
+      },
+      "name": {
+        "type": "text",
+        "analyzer": "product_analyzer",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "category": {
+        "type": "keyword"
+      },
+      "description": {
+        "type": "text",
+        "analyzer": "product_analyzer"
+      },
+      "price": {
+        "type": "float"
+      },
+      "common_issues": {
+        "type": "text",
+        "analyzer": "product_analyzer"
+      },
+      "return_policy_days": {
+        "type": "integer"
+      },
+      "warranty_months": {
+        "type": "integer"
+      },
+      "defect_rate": {
+        "type": "float"
+      },
+      "tags": {
+        "type": "keyword"
+      },
+      "in_stock": {
+        "type": "boolean"
+      },
+      "stock_quantity": {
+        "type": "integer"
+      },
+      "created_at": {
+        "type": "date"
+      },
+      "updated_at": {
+        "type": "date"
+      }
+    }
+  }
+}

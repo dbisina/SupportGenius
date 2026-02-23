@@ -1,0 +1,66 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1,
+    "analysis": {
+      "analyzer": {
+        "knowledge_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase", "stop", "snowball"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "article_id": {
+        "type": "keyword"
+      },
+      "title": {
+        "type": "text",
+        "analyzer": "knowledge_analyzer",
+        "fields": {
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
+        }
+      },
+      "content": {
+        "type": "text",
+        "analyzer": "knowledge_analyzer"
+      },
+      "content_embedding": {
+        "type": "dense_vector",
+        "dims": 1536,
+        "index": true,
+        "similarity": "cosine"
+      },
+      "category": {
+        "type": "keyword"
+      },
+      "tags": {
+        "type": "keyword"
+      },
+      "helpful_count": {
+        "type": "integer"
+      },
+      "view_count": {
+        "type": "integer"
+      },
+      "author": {
+        "type": "keyword"
+      },
+      "published": {
+        "type": "boolean"
+      },
+      "created_at": {
+        "type": "date"
+      },
+      "last_updated": {
+        "type": "date"
+      }
+    }
+  }
+}

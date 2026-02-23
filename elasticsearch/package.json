@@ -1,0 +1,17 @@
+{
+  "name": "supportgenius-elasticsearch",
+  "version": "1.0.0",
+  "description": "Elasticsearch setup and seed scripts for SupportGenius AI",
+  "scripts": {
+    "setup": "node scripts/setup-indexes.js",
+    "seed": "node scripts/seed-data.js",
+    "reset": "npm run setup && npm run seed"
+  },
+  "keywords": ["elasticsearch", "agent-builder"],
+  "author": "SupportGenius Team",
+  "license": "MIT",
+  "dependencies": {
+    "@elastic/elasticsearch": "^8.12.0",
+    "dotenv": "^16.4.5"
+  }
+}
