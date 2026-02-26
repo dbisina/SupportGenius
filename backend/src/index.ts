@@ -1,6 +1,7 @@
 import dns from 'dns';
 dns.setDefaultResultOrder('ipv4first'); // avoid slow IPv6 fallback on Windows
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { logger } from './utils/logger';
@@ -55,6 +56,18 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/agents', agentRoutes);
 app.use('/api/incidents', incidentRoutes);
+
+// Static files and client-side routing fallback
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '../../frontend/dist');
+  app.use(express.static(frontendPath));
+
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(frontendPath, 'index.html'));
+    }
+  });
+}
 
 // Error handling middleware
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
