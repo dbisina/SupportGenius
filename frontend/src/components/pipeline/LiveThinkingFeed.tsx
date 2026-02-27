@@ -91,7 +91,7 @@ export default function LiveThinkingFeed({ ticketId }: { ticketId: string }) {
   const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const apiBase = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
     const es = new EventSource(`${apiBase}/tickets/${ticketId}/stream`);
     eventSourceRef.current = es;
 
@@ -143,7 +143,7 @@ export default function LiveThinkingFeed({ ticketId }: { ticketId: string }) {
   }
 
   return (
-    <div className="glass-panel rounded-2xl overflow-hidden flex flex-col h-[600px] border border-white/5">
+    <div className="glass-panel rounded-2xl overflow-hidden flex flex-col h-[500px] border border-white/5">
       {/* Terminal Header */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-black/40 backdrop-blur-md">
         <div className="flex items-center space-x-3">

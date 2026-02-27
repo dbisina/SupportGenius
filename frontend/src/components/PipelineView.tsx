@@ -158,7 +158,7 @@ export default function PipelineView({ ticketId, mode, onComplete }: PipelineVie
         />
       )}
 
-      {/* Live Thinking Feed — shows agents reasoning in real-time */}
+      {/* Live Thinking Feed — visible while pipeline is running */}
       {mode === 'live' && !done && (
         <LiveThinkingFeed ticketId={ticketId} />
       )}

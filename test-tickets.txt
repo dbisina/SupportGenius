@@ -154,3 +154,24 @@ Subject  : Received completely wrong item - ordered headphones got a phone case
 Desc     : Same description as Ticket 1.
 Mode     : autonomous
 Expects  : Same outcome as Ticket 1, resolved in a single agent call
+
+
+── TICKET 13 ────────────────────────────────────────────
+Scenario : High-Ambiguity "2-Way" Fault (Demo Highlight)
+Email    : robert.vance.vip@executive.com
+Order ID : ORD-449922
+Subject  : Waterproofing failure on $450 "Everest Pro" Hiking Boots
+Desc     : I am deeply disappointed in the Everest Pro boots I purchased last
+           month. I was caught in a heavy storm while hiking in the Sierras. 
+           despite the product being marketed as "100% Waterproof", both of my 
+           socks were completely soaked through after about 30 minutes. 
+           The water seemed to seep in through the side seams. I did have to 
+           cross a small creek, but I was careful. For a $450 pair of boots 
+           from a brand I've spent $12,000 with, this is unacceptable. I want 
+            a full refund and a replacement pair sent overnight.
+Expects  : category=product_issue, fault=shared_fault (ambiguous), 
+           Optimist vs Pragmatist Debate Required.
+           - Optimist: Focus on $12k LTV and "100% Waterproof" marketing.
+           - Pragmatist: Focus on "small creek" (likely > 3 inch limit) and 
+             "seep through seams" vs submerged.
+           - Debate: Negotiate store credit vs refund vs replacement.
