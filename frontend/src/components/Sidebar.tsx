@@ -5,7 +5,9 @@ import {
   BarChart3, 
   Settings,
   Bot,
-  Activity
+  Activity,
+  Package,
+  Users
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -14,6 +16,8 @@ export default function Sidebar() {
   const navItems = [
     { path: '/', label: 'Command Center', icon: LayoutDashboard },
     { path: '/tickets', label: 'Tickets', icon: Ticket },
+    { path: '/products', label: 'Products', icon: Package },
+    { path: '/customers', label: 'Customers', icon: Users },
     { path: '/agents', label: 'Agent Swarm', icon: Bot },
     { path: '/analytics', label: 'Analytics', icon: BarChart3 },
   ];

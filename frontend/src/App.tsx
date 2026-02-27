@@ -5,6 +5,8 @@ import Tickets from './pages/Tickets';
 import TicketDetail from './pages/TicketDetail';
 import Agents from './pages/Agents';
 import Analytics from './pages/Analytics';
+import Products from './pages/Products';
+import Customers from './pages/Customers';
 
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
         <Route path="/tickets" element={<Tickets />} />
         <Route path="/agents" element={<Agents />} />
         <Route path="/analytics" element={<Analytics />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/customers" element={<Customers />} />
       </Routes>
     </Layout>
   );

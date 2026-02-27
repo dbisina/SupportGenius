@@ -105,4 +105,26 @@ export async function getImpactMetrics() {
   return response.data;
 }
 
+// Products
+export async function listProducts(filters?: { category?: string; search?: string; limit?: number; offset?: number }) {
+  const response = await api.get('/products', { params: filters });
+  return response.data;
+}
+
+export async function getProduct(productId: string) {
+  const response = await api.get(`/products/${productId}`);
+  return response.data;
+}
+
+// Customers
+export async function listCustomers(filters?: { vip?: string; search?: string; limit?: number; offset?: number }) {
+  const response = await api.get('/customers', { params: filters });
+  return response.data;
+}
+
+export async function getCustomer(customerId: string) {
+  const response = await api.get(`/customers/${customerId}`);
+  return response.data;
+}
+
 export default api;

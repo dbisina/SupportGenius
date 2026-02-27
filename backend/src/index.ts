@@ -11,6 +11,8 @@ import ticketRoutes from './routes/tickets';
 import metricsRoutes from './routes/metrics';
 import agentRoutes from './routes/agents';
 import incidentRoutes from './routes/incidents';
+import productRoutes from './routes/products';
+import customerRoutes from './routes/customers';
 
 // Load environment variables
 dotenv.config();
@@ -56,6 +58,8 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/agents', agentRoutes);
 app.use('/api/incidents', incidentRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/customers', customerRoutes);
 
 // Static files and client-side routing fallback
 if (process.env.NODE_ENV === 'production') {
