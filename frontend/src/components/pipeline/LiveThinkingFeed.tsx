@@ -211,22 +211,69 @@ export default function LiveThinkingFeed({ ticketId, mode }: { ticketId: string;
                         </span>
                       </div>
 
-                      {/* Debate Block */}
-                      {ev.type === 'debate' && ev.detail?.role && ev.detail?.key_points && (
-                        <div className="ml-16 mt-2 mb-2 p-3 rounded bg-white/5 border border-white/5 text-xs max-w-2xl">
-                          <div className="flex items-center justify-between mb-2">
-                             <span className={`font-bold uppercase tracking-wider ${ev.detail.role === 'optimist' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                                {ev.detail.role} Argument
-                             </span>
-                          </div>
-                          <div className="text-slate-300 mb-2 italic">"{ev.detail.proposed_action}"</div>
-                          <div className="space-y-1">
-                            {ev.detail.key_points.map((kp: string, ki: number) => (
-                              <div key={ki} className="flex items-start space-x-2 text-slate-500">
-                                 <span className="text-slate-700">•</span>
-                                 <span>{kp}</span>
+                      {/* Debate Block — Chat-style conversation */}
+                      {ev.type === 'debate' && ev.detail?.role && (
+                        <div className={`ml-6 mt-3 mb-3 max-w-2xl flex ${ev.detail.role === 'optimist' ? 'justify-start' : 'justify-end'}`}>
+                          <div className={`flex items-start space-x-3 max-w-[85%] ${ev.detail.role === 'pragmatist' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                            {/* Avatar */}
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black shadow-lg ${
+                              ev.detail.role === 'optimist' 
+                                ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-emerald-500/30' 
+                                : 'bg-gradient-to-br from-amber-500 to-orange-600 shadow-amber-500/30'
+                            }`}>
+                              {ev.detail.role === 'optimist' ? '🛡️' : '⚖️'}
+                            </div>
+                            
+                            {/* Chat Bubble */}
+                            <div className={`rounded-2xl px-4 py-3 border backdrop-blur-sm ${
+                              ev.detail.role === 'optimist'
+                                ? 'bg-emerald-500/10 border-emerald-500/20 rounded-tl-sm'
+                                : 'bg-amber-500/10 border-amber-500/20 rounded-tr-sm'
+                            }`}>
+                              {/* Role Label */}
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className={`text-[10px] font-bold uppercase tracking-widest ${
+                                  ev.detail.role === 'optimist' ? 'text-emerald-400' : 'text-amber-400'
+                                }`}>
+                                  {ev.detail.role === 'optimist' ? '🟢 Optimist · Customer Advocate' : '🟠 Pragmatist · Policy Guardian'}
+                                </span>
                               </div>
-                            ))}
+
+                              {/* Proposed Action */}
+                              {ev.detail.proposed_action && (
+                                <p className="text-sm text-white font-medium mb-2 leading-relaxed">
+                                  "{ev.detail.proposed_action}"
+                                </p>
+                              )}
+
+                              {/* Argument / Message */}
+                              {ev.detail.argument && (
+                                <p className="text-xs text-slate-300 leading-relaxed mb-2">
+                                  {ev.detail.argument}
+                                </p>
+                              )}
+
+                              {/* Key Points as conversational bullets */}
+                              {ev.detail.key_points?.length > 0 && (
+                                <div className="space-y-1 mt-2 pt-2 border-t border-white/5">
+                                  {ev.detail.key_points.map((kp: string, ki: number) => (
+                                    <div key={ki} className="flex items-start space-x-2 text-xs">
+                                      <span className={`mt-0.5 ${ev.detail.role === 'optimist' ? 'text-emerald-500' : 'text-amber-500'}`}>→</span>
+                                      <span className="text-slate-400">{kp}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Confidence Badge */}
+                              {ev.detail.confidence != null && (
+                                <div className={`mt-2 inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-mono ${
+                                  ev.detail.role === 'optimist' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
+                                }`}>
+                                  <span>confidence: {(ev.detail.confidence * 100).toFixed(0)}%</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       )}

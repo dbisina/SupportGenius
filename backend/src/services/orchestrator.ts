@@ -58,14 +58,14 @@ export class TicketOrchestrator {
   private emitConfidence(ticketId: string, agent: string, step: number, confidence: number, reasoning?: string) {
     const certaintyLevel = confidence >= 0.8 ? 'high'
       : confidence >= 0.6 ? 'medium'
-      : confidence >= 0.4 ? 'low' : 'critical';
+        : confidence >= 0.4 ? 'low' : 'critical';
     this.emitEvent(ticketId, agent, step, 'confidence',
       `Confidence: ${(confidence * 100).toFixed(0)}% (${certaintyLevel})`, {
-        confidence,
-        certainty_level: certaintyLevel,
-        human_review_required: confidence < 0.6,
-        reasoning: reasoning || '',
-      },
+      confidence,
+      certainty_level: certaintyLevel,
+      human_review_required: confidence < 0.6,
+      reasoning: reasoning || '',
+    },
     );
   }
 
@@ -701,146 +701,146 @@ export class TicketOrchestrator {
         this.emitConfidence(ticket_id, 'simulation', 4, decisionResult.confidence || 0.85);
       } else {
 
-      logger.info('Step 4: Simulation Agent (Agent Builder)', { ticket_id });
-      const simulationStart = Date.now();
-      await this.persistence.saveTrace(makeRunningTrace(ticket_id, 'simulation', 4, simulationStart));
-      await this.persistence.updateTicketStatus(ticket_id, 'simulating');
-      this.emitEvent(ticket_id, 'simulation', 4, 'status', 'Simulation Agent activated — running Monte Carlo scenario projections');
-      this.emitEvent(ticket_id, 'simulation', 4, 'thinking', 'Modeling 3 resolution scenarios: generous, moderate, and minimal approaches...');
+        logger.info('Step 4: Simulation Agent (Agent Builder)', { ticket_id });
+        const simulationStart = Date.now();
+        await this.persistence.saveTrace(makeRunningTrace(ticket_id, 'simulation', 4, simulationStart));
+        await this.persistence.updateTicketStatus(ticket_id, 'simulating');
+        this.emitEvent(ticket_id, 'simulation', 4, 'status', 'Simulation Agent activated — running Monte Carlo scenario projections');
+        this.emitEvent(ticket_id, 'simulation', 4, 'thinking', 'Modeling 3 resolution scenarios: generous, moderate, and minimal approaches...');
 
-      // ─── Phase 1: Generate Scenarios ───
-      this.emitEvent(ticket_id, 'simulation', 4, 'thinking', 'Phase 1/2: Generating resolution scenarios — generous, moderate, minimal...');
-      const simulationInput = [
-        `Run scenario projections for this support ticket resolution:`,
-        ``,
-        `TICKET:`,
-        `  ID: ${ticket_id}`,
-        `  Subject: ${request.subject}`,
-        `  Description: ${request.description}`,
-        `  Category: ${triageResult.category}`,
-        `  Priority: ${triageResult.priority}`,
-        `  Sentiment: ${triageResult.sentiment}`,
-        ``,
-        `CUSTOMER CONTEXT:`,
-        `  Customer: ${request.customer_email}`,
-        `  VIP: ${researchResult.customer?.vip || false}`,
-        `  Lifetime Value: $${researchResult.customer?.lifetime_value || 'unknown'}`,
-        `  Total Orders: ${researchResult.customer?.total_orders || 'unknown'}`,
-        `  Total Returns: ${researchResult.customer?.total_returns || 'unknown'}`,
-        ``,
-        `DECISION AGENT RECOMMENDATION:`,
-        `  Action: ${decisionResult.action_type}`,
-        `  Parameters: ${JSON.stringify(decisionResult.parameters || {})}`,
-        `  Reasoning: ${decisionResult.reasoning}`,
-        `  Business Rules Applied: ${decisionResult.business_rules_applied?.join(', ') || 'none'}`,
-        ``,
-        `RESEARCH:`,
-        `  Similar tickets: ${researchResult.similar_tickets?.length || 0}`,
-        `  Available actions: ${researchResult.available_actions?.map((a: any) => `${a.action_type}(${((a.success_rate || 0) * 100).toFixed(0)}%)`).join(', ') || 'none'}`,
-        ...(enhancedContext?.resolution_patterns?.length ? [
+        // ─── Phase 1: Generate Scenarios ───
+        this.emitEvent(ticket_id, 'simulation', 4, 'thinking', 'Phase 1/2: Generating resolution scenarios — generous, moderate, minimal...');
+        const simulationInput = [
+          `Run scenario projections for this support ticket resolution:`,
           ``,
-          `RESOLUTION SUCCESS RATES:`,
-          ...enhancedContext.resolution_patterns.map(p => `  ${p.action_type}: ${(p.success_rate * 100).toFixed(0)}% success (used ${p.total_used}x)`),
-        ] : []),
-        ...(enhancedContext?.customer?.churn_risk ? [
-          `  Churn Risk: ${enhancedContext.customer.churn_risk.toUpperCase()}`,
-        ] : []),
-        ``,
-        `This is PHASE 1 of 2. Search for historical resolution outcomes. Generate 3 scenarios with specific parameters.`,
-        `Respond with JSON: \`\`\`json\n{"scenarios":[{"name":"generous","action_type":"...","description":"...","parameters":{},"satisfaction_estimate":0.9,"projected_ltv_impact":0,"cost_to_company":0,"churn_risk_delta":0},{"name":"moderate",...},{"name":"minimal",...}],"data_sources_consulted":["..."]}\n\`\`\``,
-      ].join('\n');
-
-      const simPhase1 = await this.converseWithEmit(ticket_id, 'simulation', 4, AGENT_IDS.SIMULATION, simulationInput);
-      const simPhase1Result = this.safeParseJson(simPhase1, 'simulation-phase1', {
-        scenarios: [
-          { name: 'generous', action_type: decisionResult.action_type, description: 'Generous resolution', parameters: {}, satisfaction_estimate: 0.9, projected_ltv_impact: 100, cost_to_company: 50, churn_risk_delta: -0.1 },
-          { name: 'moderate', action_type: decisionResult.action_type, description: 'Moderate resolution', parameters: {}, satisfaction_estimate: 0.75, projected_ltv_impact: 25, cost_to_company: 25, churn_risk_delta: -0.03 },
-          { name: 'minimal', action_type: decisionResult.action_type, description: 'Minimal resolution', parameters: {}, satisfaction_estimate: 0.5, projected_ltv_impact: -50, cost_to_company: 5, churn_risk_delta: 0.08 },
-        ],
-        data_sources_consulted: [],
-      }, ticket_id);
-      const simConvId = simPhase1.conversation_id;
-
-      if (simPhase1Result.scenarios?.length > 0) {
-        for (const s of simPhase1Result.scenarios) {
-          this.emitEvent(ticket_id, 'simulation', 4, 'insight', `Scenario "${s.name}": ${s.description || s.action_type} — ${s.satisfaction_estimate ? `${(s.satisfaction_estimate * 100).toFixed(0)}% satisfaction` : ''}${s.projected_ltv_impact !== undefined ? `, LTV impact ${s.projected_ltv_impact >= 0 ? '+' : ''}$${s.projected_ltv_impact}` : ''}`);
-        }
-      }
-      this.logToolCalls(ticket_id, 'SimulationAgent', simPhase1);
-
-      // ─── Phase 2: ROI Analysis & Recommendation ───
-      this.emitEvent(ticket_id, 'simulation', 4, 'thinking', 'Phase 2/2: ROI analysis — selecting optimal scenario based on cost/benefit tradeoffs...');
-      try {
-        const simRefineInput = [
-          `This is PHASE 2 of 2. You generated ${simPhase1Result.scenarios?.length || 3} scenarios. Now do the ROI analysis.`,
+          `TICKET:`,
+          `  ID: ${ticket_id}`,
+          `  Subject: ${request.subject}`,
+          `  Description: ${request.description}`,
+          `  Category: ${triageResult.category}`,
+          `  Priority: ${triageResult.priority}`,
+          `  Sentiment: ${triageResult.sentiment}`,
           ``,
-          `For each scenario, calculate:`,
-          `- ROI = (projected_ltv_impact - cost_to_company) / cost_to_company`,
-          `- Risk-adjusted score = satisfaction_estimate * (1 - abs(churn_risk_delta))`,
-          `- Weight VIP customers 2x for satisfaction and LTV impact`,
+          `CUSTOMER CONTEXT:`,
+          `  Customer: ${request.customer_email}`,
+          `  VIP: ${researchResult.customer?.vip || false}`,
+          `  Lifetime Value: $${researchResult.customer?.lifetime_value || 'unknown'}`,
+          `  Total Orders: ${researchResult.customer?.total_orders || 'unknown'}`,
+          `  Total Returns: ${researchResult.customer?.total_returns || 'unknown'}`,
           ``,
-          `Then recommend the BEST scenario and explain why. Also check if any scenario could be improved by combining elements.`,
+          `DECISION AGENT RECOMMENDATION:`,
+          `  Action: ${decisionResult.action_type}`,
+          `  Parameters: ${JSON.stringify(decisionResult.parameters || {})}`,
+          `  Reasoning: ${decisionResult.reasoning}`,
+          `  Business Rules Applied: ${decisionResult.business_rules_applied?.join(', ') || 'none'}`,
           ``,
-          `Respond with the FINAL simulation result: \`\`\`json`,
-          `{"scenarios":[same scenarios with any adjustments],"recommended_action":"...","recommended_scenario":"generous|moderate|minimal","recommended_parameters":{},"confidence":0.0-1.0,"projected_roi":0.0,"risk_analysis":"...","reasoning":"detailed justification for recommendation"}`,
-          `\`\`\``,
+          `RESEARCH:`,
+          `  Similar tickets: ${researchResult.similar_tickets?.length || 0}`,
+          `  Available actions: ${researchResult.available_actions?.map((a: any) => `${a.action_type}(${((a.success_rate || 0) * 100).toFixed(0)}%)`).join(', ') || 'none'}`,
+          ...(enhancedContext?.resolution_patterns?.length ? [
+            ``,
+            `RESOLUTION SUCCESS RATES:`,
+            ...enhancedContext.resolution_patterns.map(p => `  ${p.action_type}: ${(p.success_rate * 100).toFixed(0)}% success (used ${p.total_used}x)`),
+          ] : []),
+          ...(enhancedContext?.customer?.churn_risk ? [
+            `  Churn Risk: ${enhancedContext.customer.churn_risk.toUpperCase()}`,
+          ] : []),
+          ``,
+          `This is PHASE 1 of 2. Search for historical resolution outcomes. Generate 3 scenarios with specific parameters.`,
+          `Respond with JSON: \`\`\`json\n{"scenarios":[{"name":"generous","action_type":"...","description":"...","parameters":{},"satisfaction_estimate":0.9,"projected_ltv_impact":0,"cost_to_company":0,"churn_risk_delta":0},{"name":"moderate",...},{"name":"minimal",...}],"data_sources_consulted":["..."]}\n\`\`\``,
         ].join('\n');
 
-        const simPhase2 = await this.converseWithEmit(ticket_id, 'simulation', 4, AGENT_IDS.SIMULATION, simRefineInput, simConvId);
-        simulationResult = this.safeParseJson(simPhase2, 'simulation', {
-          scenarios: simPhase1Result.scenarios,
-          recommended_action: decisionResult.action_type,
-          recommended_scenario: 'moderate',
-          recommended_parameters: decisionResult.parameters || {},
-          confidence: 0.75,
-          projected_roi: 2.0,
-          risk_analysis: 'Standard risk profile',
-          reasoning: 'Fallback simulation',
+        const simPhase1 = await this.converseWithEmit(ticket_id, 'simulation', 4, AGENT_IDS.SIMULATION, simulationInput);
+        const simPhase1Result = this.safeParseJson(simPhase1, 'simulation-phase1', {
+          scenarios: [
+            { name: 'generous', action_type: decisionResult.action_type, description: 'Generous resolution', parameters: {}, satisfaction_estimate: 0.9, projected_ltv_impact: 100, cost_to_company: 50, churn_risk_delta: -0.1 },
+            { name: 'moderate', action_type: decisionResult.action_type, description: 'Moderate resolution', parameters: {}, satisfaction_estimate: 0.75, projected_ltv_impact: 25, cost_to_company: 25, churn_risk_delta: -0.03 },
+            { name: 'minimal', action_type: decisionResult.action_type, description: 'Minimal resolution', parameters: {}, satisfaction_estimate: 0.5, projected_ltv_impact: -50, cost_to_company: 5, churn_risk_delta: 0.08 },
+          ],
+          data_sources_consulted: [],
         }, ticket_id);
+        const simConvId = simPhase1.conversation_id;
 
-        // Merge traces
-        mergedSimResponse = {
-          ...simPhase2,
-          steps: [...(simPhase1.steps || []), ...(simPhase2.steps || [])],
-          model_usage: {
-            connector_id: simPhase2.model_usage?.connector_id || '',
-            llm_calls: (simPhase1.model_usage?.llm_calls || 0) + (simPhase2.model_usage?.llm_calls || 0),
-            input_tokens: (simPhase1.model_usage?.input_tokens || 0) + (simPhase2.model_usage?.input_tokens || 0),
-            output_tokens: (simPhase1.model_usage?.output_tokens || 0) + (simPhase2.model_usage?.output_tokens || 0),
-            model: simPhase2.model_usage?.model || 'unknown',
-          },
-        };
-        this.logToolCalls(ticket_id, 'SimulationAgent', simPhase2);
-      } catch (phase2Err) {
-        // Phase error recovery: use phase 1 scenarios as final result
-        logger.warn('Simulation phase 2 failed, recovering with phase 1 scenarios', { ticket_id, error: phase2Err });
-        this.emitEvent(ticket_id, 'simulation', 4, 'thinking', 'Phase 2 recovery: using phase 1 scenarios (ROI analysis unavailable)');
-        const moderateScenario = simPhase1Result.scenarios?.find((s: any) => s.name === 'moderate') || simPhase1Result.scenarios?.[1];
-        simulationResult = {
-          scenarios: simPhase1Result.scenarios,
-          recommended_action: moderateScenario?.action_type || decisionResult.action_type,
-          recommended_scenario: 'moderate',
-          recommended_parameters: moderateScenario?.parameters || decisionResult.parameters || {},
-          confidence: 0.6,
-          projected_roi: 1.0,
-          risk_analysis: 'Phase 2 recovery — using moderate scenario as default',
-          reasoning: 'ROI analysis unavailable, defaulting to moderate scenario',
-        };
-        mergedSimResponse = simPhase1;
-      }
-      await this.persistence.saveTrace(extractTrace(ticket_id, 'simulation', 4, mergedSimResponse!, simulationResult, simulationStart));
+        if (simPhase1Result.scenarios?.length > 0) {
+          for (const s of simPhase1Result.scenarios) {
+            this.emitEvent(ticket_id, 'simulation', 4, 'insight', `Scenario "${s.name}": ${s.description || s.action_type} — ${s.satisfaction_estimate ? `${(s.satisfaction_estimate * 100).toFixed(0)}% satisfaction` : ''}${s.projected_ltv_impact !== undefined ? `, LTV impact ${s.projected_ltv_impact >= 0 ? '+' : ''}$${s.projected_ltv_impact}` : ''}`);
+          }
+        }
+        this.logToolCalls(ticket_id, 'SimulationAgent', simPhase1);
 
-      this.emitEvent(ticket_id, 'simulation', 4, 'decision', `Recommended: ${simulationResult.recommended_action?.replace(/_/g, ' ')} (${simulationResult.recommended_scenario || 'optimal'} scenario) — projected ROI ${simulationResult.projected_roi}x`);
-      if (simulationResult.risk_analysis) {
-        this.emitEvent(ticket_id, 'simulation', 4, 'insight', `Risk analysis: ${simulationResult.risk_analysis}`);
-      }
-      this.emitEvent(ticket_id, 'simulation', 4, 'complete', `Simulation complete in ${((Date.now() - simulationStart) / 1000).toFixed(1)}s — 2 phases, ${mergedSimResponse.model_usage?.llm_calls || 2} LLM calls`);
-      this.emitConfidence(ticket_id, 'simulation', 4, simulationResult.confidence || 0.75, simulationResult.reasoning);
+        // ─── Phase 2: ROI Analysis & Recommendation ───
+        this.emitEvent(ticket_id, 'simulation', 4, 'thinking', 'Phase 2/2: ROI analysis — selecting optimal scenario based on cost/benefit tradeoffs...');
+        try {
+          const simRefineInput = [
+            `This is PHASE 2 of 2. You generated ${simPhase1Result.scenarios?.length || 3} scenarios. Now do the ROI analysis.`,
+            ``,
+            `For each scenario, calculate:`,
+            `- ROI = (projected_ltv_impact - cost_to_company) / cost_to_company`,
+            `- Risk-adjusted score = satisfaction_estimate * (1 - abs(churn_risk_delta))`,
+            `- Weight VIP customers 2x for satisfaction and LTV impact`,
+            ``,
+            `Then recommend the BEST scenario and explain why. Also check if any scenario could be improved by combining elements.`,
+            ``,
+            `Respond with the FINAL simulation result: \`\`\`json`,
+            `{"scenarios":[same scenarios with any adjustments],"recommended_action":"...","recommended_scenario":"generous|moderate|minimal","recommended_parameters":{},"confidence":0.0-1.0,"projected_roi":0.0,"risk_analysis":"...","reasoning":"detailed justification for recommendation"}`,
+            `\`\`\``,
+          ].join('\n');
 
-      await this.persistence.logActivity(ticket_id, 'SimulationAgent',
-        `2-phase simulation: ${simPhase1Result.scenarios?.length || 3} scenarios evaluated. Recommended: ${simulationResult.recommended_action} (${simulationResult.recommended_scenario || 'optimal'}, ROI: ${simulationResult.projected_roi}x)`,
-      );
-      this.logToolCalls(ticket_id, 'SimulationAgent', mergedSimResponse!);
+          const simPhase2 = await this.converseWithEmit(ticket_id, 'simulation', 4, AGENT_IDS.SIMULATION, simRefineInput, simConvId);
+          simulationResult = this.safeParseJson(simPhase2, 'simulation', {
+            scenarios: simPhase1Result.scenarios,
+            recommended_action: decisionResult.action_type,
+            recommended_scenario: 'moderate',
+            recommended_parameters: decisionResult.parameters || {},
+            confidence: 0.75,
+            projected_roi: 2.0,
+            risk_analysis: 'Standard risk profile',
+            reasoning: 'Fallback simulation',
+          }, ticket_id);
+
+          // Merge traces
+          mergedSimResponse = {
+            ...simPhase2,
+            steps: [...(simPhase1.steps || []), ...(simPhase2.steps || [])],
+            model_usage: {
+              connector_id: simPhase2.model_usage?.connector_id || '',
+              llm_calls: (simPhase1.model_usage?.llm_calls || 0) + (simPhase2.model_usage?.llm_calls || 0),
+              input_tokens: (simPhase1.model_usage?.input_tokens || 0) + (simPhase2.model_usage?.input_tokens || 0),
+              output_tokens: (simPhase1.model_usage?.output_tokens || 0) + (simPhase2.model_usage?.output_tokens || 0),
+              model: simPhase2.model_usage?.model || 'unknown',
+            },
+          };
+          this.logToolCalls(ticket_id, 'SimulationAgent', simPhase2);
+        } catch (phase2Err) {
+          // Phase error recovery: use phase 1 scenarios as final result
+          logger.warn('Simulation phase 2 failed, recovering with phase 1 scenarios', { ticket_id, error: phase2Err });
+          this.emitEvent(ticket_id, 'simulation', 4, 'thinking', 'Phase 2 recovery: using phase 1 scenarios (ROI analysis unavailable)');
+          const moderateScenario = simPhase1Result.scenarios?.find((s: any) => s.name === 'moderate') || simPhase1Result.scenarios?.[1];
+          simulationResult = {
+            scenarios: simPhase1Result.scenarios,
+            recommended_action: moderateScenario?.action_type || decisionResult.action_type,
+            recommended_scenario: 'moderate',
+            recommended_parameters: moderateScenario?.parameters || decisionResult.parameters || {},
+            confidence: 0.6,
+            projected_roi: 1.0,
+            risk_analysis: 'Phase 2 recovery — using moderate scenario as default',
+            reasoning: 'ROI analysis unavailable, defaulting to moderate scenario',
+          };
+          mergedSimResponse = simPhase1;
+        }
+        await this.persistence.saveTrace(extractTrace(ticket_id, 'simulation', 4, mergedSimResponse!, simulationResult, simulationStart));
+
+        this.emitEvent(ticket_id, 'simulation', 4, 'decision', `Recommended: ${simulationResult.recommended_action?.replace(/_/g, ' ')} (${simulationResult.recommended_scenario || 'optimal'} scenario) — projected ROI ${simulationResult.projected_roi}x`);
+        if (simulationResult.risk_analysis) {
+          this.emitEvent(ticket_id, 'simulation', 4, 'insight', `Risk analysis: ${simulationResult.risk_analysis}`);
+        }
+        this.emitEvent(ticket_id, 'simulation', 4, 'complete', `Simulation complete in ${((Date.now() - simulationStart) / 1000).toFixed(1)}s — 2 phases, ${mergedSimResponse.model_usage?.llm_calls || 2} LLM calls`);
+        this.emitConfidence(ticket_id, 'simulation', 4, simulationResult.confidence || 0.75, simulationResult.reasoning);
+
+        await this.persistence.logActivity(ticket_id, 'SimulationAgent',
+          `2-phase simulation: ${simPhase1Result.scenarios?.length || 3} scenarios evaluated. Recommended: ${simulationResult.recommended_action} (${simulationResult.recommended_scenario || 'optimal'}, ROI: ${simulationResult.projected_roi}x)`,
+        );
+        this.logToolCalls(ticket_id, 'SimulationAgent', mergedSimResponse!);
 
       } // end simulation else block
 
@@ -993,14 +993,14 @@ export class TicketOrchestrator {
         mergedExecResponse = {
           ...execPhase2,
           steps: [...(execPhase1.steps || []), ...(execPhase2.steps || [])],
-        model_usage: {
-          connector_id: execPhase2.model_usage?.connector_id || '',
-          llm_calls: (execPhase1.model_usage?.llm_calls || 0) + (execPhase2.model_usage?.llm_calls || 0),
-          input_tokens: (execPhase1.model_usage?.input_tokens || 0) + (execPhase2.model_usage?.input_tokens || 0),
-          output_tokens: (execPhase1.model_usage?.output_tokens || 0) + (execPhase2.model_usage?.output_tokens || 0),
-          model: execPhase2.model_usage?.model || 'unknown',
-        },
-      };
+          model_usage: {
+            connector_id: execPhase2.model_usage?.connector_id || '',
+            llm_calls: (execPhase1.model_usage?.llm_calls || 0) + (execPhase2.model_usage?.llm_calls || 0),
+            input_tokens: (execPhase1.model_usage?.input_tokens || 0) + (execPhase2.model_usage?.input_tokens || 0),
+            output_tokens: (execPhase1.model_usage?.output_tokens || 0) + (execPhase2.model_usage?.output_tokens || 0),
+            model: execPhase2.model_usage?.model || 'unknown',
+          },
+        };
 
         // Attach tool synthesis and validation data
         if (toolSynthesisResult) {
@@ -1577,7 +1577,7 @@ export class TicketOrchestrator {
     const pragmatistScore = (prag2.confidence || 0.5) * 1.0;
 
     if (opt2.proposed_action === prag2.proposed_action &&
-        JSON.stringify(opt2.proposed_parameters) === JSON.stringify(prag2.proposed_parameters)) {
+      JSON.stringify(opt2.proposed_parameters) === JSON.stringify(prag2.proposed_parameters)) {
       transcript.consensus_reached = true;
       transcript.winner = 'consensus';
       transcript.final_action_type = opt2.proposed_action;
@@ -1663,7 +1663,7 @@ export class TicketOrchestrator {
       if (ticketId) {
         const step = agentName.includes('triage') ? 1 : agentName.includes('research') ? 2
           : agentName.includes('decision') || agentName.includes('optimist') || agentName.includes('pragmatist') ? 3
-          : agentName.includes('simulation') ? 4 : agentName.includes('execution') ? 5 : 6;
+            : agentName.includes('simulation') ? 4 : agentName.includes('execution') ? 5 : 6;
         const agent = agentName.split('-')[0];
         this.emitEvent(ticketId, agent, step, 'thinking',
           `Parse warning: ${agentName} returned non-JSON response, using structured fallback. Raw: "${rawSnippet.substring(0, 100)}..."`,
@@ -1691,35 +1691,17 @@ export class TicketOrchestrator {
     input: string,
     conversationId?: string,
   ): Promise<ConverseResponse> {
-    const callStart = Date.now();
-    let firstStepArrived = false;
-
-    // Emit a progress tick every 3 seconds so the terminal stays alive while
-    // Agent Builder is processing (which can take 30-120 s with no events).
-    // The ticker stops the moment the first real step arrives.
-    const ticker = setInterval(() => {
-      if (!firstStepArrived) {
-        const secs = Math.floor((Date.now() - callStart) / 1000);
-        this.emitEvent(ticketId, agent, step, 'thinking', `⟳ Agent Builder processing… ${secs}s`);
-      }
-    }, 3000);
-
     try {
       return await agentBuilder.converseWithStepCallback(
         agentId,
         input,
         conversationId,
         (s) => {
-          // Cancel ticker as soon as real content arrives
-          if (!firstStepArrived) {
-            firstStepArrived = true;
-            clearInterval(ticker);
-          }
           this.emitStep(ticketId, agent, step, s);
         },
       );
     } finally {
-      clearInterval(ticker);
+      // no-op cleanup
     }
   }
 
