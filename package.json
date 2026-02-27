@@ -3,7 +3,9 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-        "install:all": "npm install && npm install --prefix backend && npm install --prefix frontend",
+        "install:backend": "npm install --prefix backend --include=dev",
+        "install:frontend": "npm install --prefix frontend --include=dev",
+        "postinstall": "npm run install:backend && npm run install:frontend",
         "build:frontend": "npm run build --prefix frontend",
         "build:backend": "npm run build --prefix backend",
         "build": "npm run build:frontend && npm run build:backend",
