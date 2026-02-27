@@ -83,7 +83,7 @@ function ToolResultBlock({ detail }: { detail: any }) {
   );
 }
 
-export default function LiveThinkingFeed({ ticketId }: { ticketId: string }) {
+export default function LiveThinkingFeed({ ticketId, mode }: { ticketId: string; mode?: 'live' | 'replay' }) {
   const [events, setEvents] = useState<PipelineEvent[]>([]);
   const [connected, setConnected] = useState(false);
   const [currentAgent, setCurrentAgent] = useState<string | null>(null);
@@ -126,7 +126,8 @@ export default function LiveThinkingFeed({ ticketId }: { ticketId: string }) {
     }
   }, [events]);
 
-  if (events.length === 0 && !connected) {
+  // In live mode, always render the terminal shell (even before events arrive)
+  if (events.length === 0 && !connected && mode !== 'live') {
     return null;
   }
 

@@ -23,9 +23,9 @@ export default function TicketDetail() {
   const pipelineStatus = traceData?.pipeline_status;
   const hasTraces = (traceData?.traces?.length || 0) > 0;
   const ticketAlreadyDone = ticket?.status === 'resolved' || ticket?.status === 'escalated';
-  // Use live mode for active processing OR if it just completed in the last 10 seconds (fresh submission)
-  const isFresh = ticket?.created_at && (new Date().getTime() - new Date(ticket.created_at).getTime() < 10000);
-  const mode = (pipelineStatus === 'running' || (pipelineStatus === 'pending' && !ticketAlreadyDone) || isFresh) ? 'live' : 'replay';
+  // Default to 'live' until we know the ticket is done — this ensures the terminal
+  // is visible on first render before traceData has loaded.
+  const mode = (!traceData || pipelineStatus === 'running' || (pipelineStatus === 'pending' && !ticketAlreadyDone)) ? 'live' : 'replay';
 
   const triageTrace = traceData?.traces?.find((t: any) => t.agent === 'triage');
   const triageResult = triageTrace?.result;

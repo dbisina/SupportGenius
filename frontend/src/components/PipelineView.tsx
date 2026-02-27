@@ -160,7 +160,7 @@ export default function PipelineView({ ticketId, mode, onComplete }: PipelineVie
 
       {/* Live Thinking Feed — visible while pipeline is running */}
       {mode === 'live' && !done && (
-        <LiveThinkingFeed ticketId={ticketId} />
+        <LiveThinkingFeed ticketId={ticketId} mode="live" />
       )}
 
       {/* Pipeline summary */}
