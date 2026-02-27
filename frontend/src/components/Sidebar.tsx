@@ -10,6 +10,8 @@ import {
   Users
 } from 'lucide-react';
 
+import logo from '../assets/logo.png';
+
 export default function Sidebar() {
   const location = useLocation();
 
@@ -27,12 +29,17 @@ export default function Sidebar() {
       {/* Logo Area */}
       <div className="p-6">
         <div className="flex items-center space-x-3 group cursor-pointer">
-          <div className="relative w-10 h-10 flex items-center justify-center bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-xl border border-white/10 group-hover:border-indigo-500/50 transition-all duration-300 shadow-lg shadow-indigo-500/5">
-            <Bot className="w-6 h-6 text-indigo-400 group-hover:text-indigo-300 transition-colors" />
-            <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative w-11 h-11 flex items-center justify-center rounded-xl overflow-hidden border border-white/10 group-hover:border-indigo-500/50 transition-all duration-500 shadow-2xl">
+            <img 
+              src={logo} 
+              alt="SupportGenius" 
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 ring-1 ring-inset ring-white/20 group-hover:ring-indigo-500/30 transition-all duration-500" />
           </div>
           <div>
-            <h1 className="font-bold text-lg tracking-tight text-white">SupportGenius</h1>
+            <h1 className="font-extrabold text-lg tracking-tight text-white group-hover:text-indigo-300 transition-colors">SupportGenius</h1>
             <div className="flex items-center space-x-1.5">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -94,6 +101,17 @@ export default function Sidebar() {
 
       {/* Footer / User Profile */}
       <div className="p-4 border-t border-white/5 bg-black/20 backdrop-blur-md">
+        {/* Built with Elastic Badge */}
+        <div className="px-2 mb-4">
+          <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-indigo-500/5 border border-indigo-500/10 group/elastic hover:border-indigo-500/30 transition-all duration-300">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest group-hover/elastic:text-indigo-400 transition-colors">Built with</span>
+            <div className="flex items-center space-x-1.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]" />
+              <span className="text-[11px] font-black text-white tracking-tight">ELASTIC</span>
+            </div>
+          </div>
+        </div>
+
         <button className="flex items-center space-x-3 w-full p-2 rounded-xl hover:bg-white/5 transition-all duration-300 hover:border hover:border-white/5 group relative overflow-hidden">
           <div className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 flex items-center justify-center shadow-lg group-hover:shadow-indigo-500/20 transition-all duration-300">
             <span className="text-xs font-bold text-indigo-300">AD</span>
